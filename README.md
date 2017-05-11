@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chakravala/Fatou.jl.svg?branch=master)](https://travis-ci.org/chakravala/Fatou.jl) [![Build status](https://ci.appveyor.com/api/projects/status/mdathjmu7jg57u77?svg=true)](https://ci.appveyor.com/project/chakravala/fatou-jl) [![Coverage Status](https://coveralls.io/repos/github/chakravala/Fatou.jl/badge.svg?branch=master)](https://coveralls.io/github/chakravala/Fatou.jl?branch=master) [![codecov.io](http://codecov.io/github/chakravala/Fatou.jl/coverage.svg?branch=master)](http://codecov.io/github/chakravala/Fatou.jl?branch=master)
 
-Julia package for Fatou sets. See below for examples:
+Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See below for *examples*:
 
 ## Newton Fractals
 
@@ -26,7 +26,7 @@ This package comes with a plot function designed to visualize real-valued-orbits
 
 The set of points that are within an `ϵ` neighborhood of the roots `ri` of the function `f` is
 
-![D0(ϵ)](http://latex.codecogs.com/svg.latex?D_0(\epsilon)%20=%20\left\\{%20z\in\mathbb{C}:%20\left|\\,z%20-%20r_i\\,\right|%3C\epsilon\\,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D0(ϵ)](http://latex.codecogs.com/svg.latex?D_0(\epsilon)%20=%20\left\\{%20z\in\mathbb{C}:%20\left|\\,z%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 `Fatou` also provides the function `nrset` to display the   the Newton basins using set notation in LaTeX in `IJulia`.
 
@@ -67,8 +67,7 @@ Now change the multiplicity parameter m from 1 to 2 (2). # Repeated function com
 f=z -> z^3-1; m = 2; δ = π/2;
 orbitplot(newton(f,m), [-π 2π -1],17,3,147); PyPlot.ylim(-2,7)
 nf = NewtonFractal(m,f,[-δ,δ,-δ,δ],800,N=37,ϵ=0.27,iter=true)
-PlotNF(nf,δ,f,m,c="ocean")
-nrset(f,m,3)
+PlotNF(nf,δ,f,m,c="ocean"); nrset(f,m,3)
 ```
 
 ![img/nf2-orbit.png](img/nf2-orbit.png)

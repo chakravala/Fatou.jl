@@ -17,12 +17,11 @@ p1(f::Function) = eval(sym2fun(diff(f(Sym("z"))),:Any))
 # we can substitute the expression into Newton's method and display it with LaTeX
 newton(f::Function,m) = z -> z - m*f(z)/p1(f)(z)
 
-# define multiplication operator on functions to evaluate as function composition
-import Base: *; *(f::Function,g::Function) = x -> f(g(x))
+# define recursive composition on functions
+recomp(f::Function,x::Number,j::Int) = j > 1 ? f(recomp(f,x,j-1)) : f(x)
 
 # we can convert the j-th function composition into a latex expresion
-nL(f::Function,m,j) = SymPy.latex(j==1 ?
-  newton(f,m)(Sym("z")) : (newton(f,m)^j)(Sym("z")))
+nL(f::Function,m,j) = SymPy.latex(recomp(newton(f,m),Sym(:z),j))
 
 # set of points that are within an ϵ neighborhood of the roots ri of the function f
 setstr = "- r_i\\,\\right|<\\epsilon,\\,\\forall r_i(\\,f(r_i)=0 )\\right\\}"
@@ -32,7 +31,8 @@ latexstring("D_0(\\epsilon) = \\left\\{ z\\in\\mathbb{C}: \\left|\\,z $setstr")
 nrset(f::Function,m,j) = latexstring(
   "$ds D_$j(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,$(nL(f,m,j)) $setstr")
 
-function NewtonFractal(m::Number, p::Function, ∂::Array{Float64,1}, n::Int=176; N::Int=35, ϵ::Float64=0.,exp::Number=0,iter::Bool=false,col::Function=(x, y, z)->x*y^z)
+function NewtonFractal(m::Number, p::Function, ∂, n::Int=176; N::Int=35, ϵ::Float64=0.,exp::Number=0,iter::Bool=false,col::Function=(x, y, z)->x*y^z)
+  typeof(∂) ≠ Array{Float64,1} && (∂ = [-∂,∂,-∂,∂])
   # define Complex{Float64} versions of polynomial and constant for speed
   p0(z::Complex{Float64}) = p(z); m = convert(Complex{Float64},m)
   p1 = eval(sym2fun(diff(p(Sym("z"))),:(Complex{Float64})))
@@ -52,13 +52,13 @@ function NewtonFractal(m::Number, p::Function, ∂::Array{Float64,1}, n::Int=176
 function PlotNF(nf::Union{Array{Float64,2},Array{Int,2}}, ∂=0, f::Function=0, m::Number=1; c::String="")
   # plot figure using imshow based in input preferences
   figure(); if ∂==0; isempty(c) ? imshow(nf) : imshow(nf,cmap=c)
-    else typeof(∂)!=Array{Float64,1} && (∂=[-∂,∂,-∂,∂]);
+    else typeof(∂) ≠ Array{Float64,1} && (∂=[-∂,∂,-∂,∂])
       isempty(c) ? imshow(nf,extent=∂) : imshow(nf,cmap=c,extent=∂); end
     # determine if plot is Iteration, Roots, or Limit
     typeof(nf) == Matrix{Int64} ? t = L", iter. " :
       m==1 ? t = L", roots" : t = L", limit"
     # annotate title using LaTeX
-    f!=0 && title(latexstring("z\\mapsto $(SymPy.latex(f(Sym("z")))),\\, m = $m")*t);
+    f≠0 && title(latexstring("f:z\\mapsto $(SymPy.latex(f(Sym("z")))),\\, m = $m")*t);
     # annotate y-axis with Newton's method
     ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
     colorbar(); tight_layout(); end
