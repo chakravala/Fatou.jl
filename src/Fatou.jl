@@ -63,7 +63,7 @@ function PlotNF(nf::Union{Array{Float64,2},Array{Int,2}}, ∂=0, f::Function=0, 
     # annotate title using LaTeX
     f!=0 && title(latexstring("z\\mapsto $(SymPy.latex(f(Sym("z")))),\\, m = $m")*t);
     # annotate y-axis with Newton's method
-    ylabel(L"Julia\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
+    ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
     colorbar(); tight_layout(); end
 
 end # module
