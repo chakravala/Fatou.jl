@@ -1,6 +1,8 @@
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
 
+export orbitplot
+
 function orbitplot(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
   f(x::Float64) = u(x);
   # prepare for next figure
