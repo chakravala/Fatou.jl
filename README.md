@@ -4,7 +4,7 @@
 
 Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See below for *examples*:
 
-## Newton Fractals
+**Newton Fractals**
 
 The first type we are investigating are the Julia sets of the generalized Newton's method,
 
@@ -60,6 +60,10 @@ PlotNF(nf,δ,f,m,c="jet"); nrset(f,m,3)
 ![img/nf1-iter.png](img/nf1-iter.png)
 
 ![D3(ϵ)](http://latex.codecogs.com/svg.latex?D_3(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\left(z%20-%20\frac{\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+
+View [full README](https://github.com/chakravala/Fatou.jl/blob/master/README.md) for more examples.
+
+##Examples (Continued)
 
 Now change the multiplicity parameter m from 1 to 2 (2). # Repeated function composition produces further singularities:
 
