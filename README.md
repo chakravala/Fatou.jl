@@ -8,9 +8,11 @@ Julia package for Fatou sets.
 
 The first type we are investigating are the Julia sets of the generalized Newton's method.
 
-$$\displaystyle z \mapsto z - m \frac{f(z)}{f'(z)}")$$
+```Julia
+z -> z - m*f(z)/f'(z)
+```
 
-Consider the polynomial map `f = z -> z^3-1` with variable `m = 1. To get a Julia function that applies the Newton method to this formula use `η = newton(f,m)`. Repeated function composition converges towards cube-root of 1. For example,
+Consider the polynomial map `f = z -> z^3-1` with variable `m = 1`. To get a Julia function that applies the Newton method to this formula use `η = newton(f,m)`. Repeated function composition converges towards cube-root of 1. For example,
 ```Julia
 julia> ζ = 2.1; [η(ζ), [(η^k)(ζ) for k ∈ 2:4]...]
 4-element Array{Float64,1}:
@@ -28,17 +30,11 @@ The set of points that are within an ϵ neighborhood of the roots ri of the func
 
 $$D_0(\epsilon) = \left\\{ z\in\\mathbb{C}: \left|\,z - r_i\,\\right|<\epsilon,\,\forall r_i(\,f(r_i)=0 )\right\}$$
 
-`Fatou` also provides the function `nrset` to display the   the Newton basins using set notation in LaTex.
+`Fatou` also provides the function `nrset` to display the   the Newton basins using set notation in LaTeX in `IJulia`.
 
 ```Julia
 map(display,[nrset(f,m,i) for i ∈ 1:3])
 ```
-
-$$\displaystyle D_1(\epsilon) = \left\{z\in\mathbb{C}:\left|\,z - \frac{z^{3} - 1}{3 z^{2}} - r_i\,\right|<\epsilon,\,\forall r_i(\,f(r_i)=0 )\right\}$$
-
-$$\displaystyle D_2(\epsilon) = \left\{z\in\mathbb{C}:\left|\,z - \frac{\left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{3} - 1}{3 \left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{2}} - \frac{z^{3} - 1}{3 z^{2}} - r_i\,\right|<\epsilon,\,\forall r_i(\,f(r_i)=0 )\right\}$$
-
-$$\displaystyle D_3(\epsilon) = \left\{z\in\mathbb{C}:\left|\,z - \frac{\left(z - \frac{\left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{3} - 1}{3 \left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{2}} - \frac{z^{3} - 1}{3 z^{2}}\right)^{3} - 1}{3 \left(z - \frac{\left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{3} - 1}{3 \left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{2}} - \frac{z^{3} - 1}{3 z^{2}}\right)^{2}} - \frac{\left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{3} - 1}{3 \left(z - \frac{z^{3} - 1}{3 z^{2}}\right)^{2}} - \frac{z^{3} - 1}{3 z^{2}} - r_i\,\right|<\epsilon,\,\forall r_i(\,f(r_i)=0 )\right\}$$
 
 Now we can compute the Newton fractal Julia set for a function with annotated plot of root convergents (1).
 
@@ -72,8 +68,6 @@ nrset(f,m,3)
 
 ![img/nf2-orbit.png](img/nf2-orbit.png)
 ![img/nf2-iter.png](img/nf2-iter.png)
-
-$$\displaystyle D_3(\epsilon) = \left\{z\in\mathbb{C}:\left|\,z - \frac{2 \left(z - \frac{2 \left(z - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{3} - 2}{3 \left(z - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{2}} - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{3} - 2}{3 \left(z - \frac{2 \left(z - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{3} - 2}{3 \left(z - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{2}} - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{2}} - \frac{2 \left(z - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{3} - 2}{3 \left(z - \frac{2 z^{3} - 2}{3 z^{2}}\right)^{2}} - \frac{2 z^{3} - 2}{3 z^{2}} - r_i\,\right|<\epsilon,\,\forall r_i(\,f(r_i)=0 )\right\}$$
 
 Set multiplicity parameter to `m = -0.5` for this generalized Newton fractal (3):
 
