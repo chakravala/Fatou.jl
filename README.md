@@ -12,7 +12,7 @@ The first type we are investigating are the Julia sets of the generalized Newton
 
 Consider the polynomial map `f = z -> z^3-1` with variable `m = 1`. To get a Julia function that applies the Newton method to this formula use `η = newton(f,m)`. Repeated function composition converges towards cube-root of 1. For example,
 ```Julia
-julia> ζ = 2.1; [η(ζ), [(η^k)(ζ) for k ∈ 2:4]...]
+julia> ζ = 2.1; [η(ζ), [Fatou.recomp(η,ζ,k) for k ∈ 2:4]...]
 4-element Array{Float64,1}:
  1.47559
  1.13681
