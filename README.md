@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chakravala/Fatou.jl.svg?branch=master)](https://travis-ci.org/chakravala/Fatou.jl) [![Coverage Status](https://coveralls.io/repos/chakravala/Fatou.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/chakravala/Fatou.jl?branch=master) [![codecov.io](http://codecov.io/github/chakravala/Fatou.jl/coverage.svg?branch=master)](http://codecov.io/github/chakravala/Fatou.jl?branch=master)
 
-Julia package for Fatou sets.
+Julia package for Fatou sets. See below for examples:
 
 ## Newton Fractals
 
@@ -26,7 +26,7 @@ This package comes with a plot function designed to visualize real-valued-orbits
 
 The set of points that are within an `ϵ` neighborhood of the roots `ri` of the function `f` is
 
-![D0(ϵ)](http://latex.codecogs.com/svg.latex?D_0(\epsilon)%20=%20\left\\P%20z\in\mathbb{C}:%20\left|\\,z%20-%20r_i\\,\right|%3C\epsilon\\,\\,\forall%20r_i(\\,f(r_i)=0%20)\right})
+![D0(ϵ)](http://latex.codecogs.com/svg.latex?D_0(\epsilon)%20=%20\left\\{%20z\in\mathbb{C}:%20\left|\\,z%20-%20r_i\\,\right|%3C\epsilon\\,\\,\forall%20r_i(\\,f(r_i)=0%20)\right})
 
 `Fatou` also provides the function `nrset` to display the   the Newton basins using set notation in LaTeX in `IJulia`.
 
@@ -101,7 +101,7 @@ nrset(f,m,2)
 ![img/nf4-orbit.png](img/nf4-orbit.png)
 ![img/nf4-roots.png](img/nf4-roots.png)
 
-![](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{-%202%20z%20+%20\left(z%20-%20\frac{z^{3}%20-%202%20z%20-%205}{3%20z^{2}%20-%202}\right)^{3}%20-%205%20+%20\frac{2%20z^{3}%20-%204%20z%20-%2010}{3%20z^{2}%20-%202}}{3%20\left(z%20-%20\frac{z^{3}%20-%202%20z%20-%205}{3%20z^{2}%20-%202}\right)^{2}%20-%202}%20-%20\frac{z^{3}%20-%202%20z%20-%205}{3%20z^{2}%20-%202}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{-%202%20z%20+%20\left(z%20-%20\frac{z^{3}%20-%202%20z%20-%205}{3%20z^{2}%20-%202}\right)^{3}%20-%205%20+%20\frac{2%20z^{3}%20-%204%20z%20-%2010}{3%20z^{2}%20-%202}}{3%20\left(z%20-%20\frac{z^{3}%20-%202%20z%20-%205}{3%20z^{2}%20-%202}\right)^{2}%20-%202}%20-%20\frac{z^{3}%20-%202%20z%20-%205}{3%20z^{2}%20-%202}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (5):
 
@@ -135,7 +135,7 @@ nrset(f,m,1)
 ![img/nf7-orbit.png](img/nf7-orbit.png)
 ![img/nf7-limit.png](img/nf7-limit.png)
 
-![](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{1.5%20z^{8}%20-%2075961.5}{8%20z^{7}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D1(ϵ)](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{1.5%20z^{8}%20-%2075961.5}{8%20z^{7}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (8):
 
@@ -158,7 +158,7 @@ nrset(f,m,3)
 ![img/nf9-orbit.png](img/nf9-orbit.png)
 ![img/nf9-iter.png](img/nf9-iter.png)
 
-![](http://latex.codecogs.com/svg.latex?D_3(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20-%20\frac{\sin{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}{\cos{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}%20+%20\frac{\sin{\left%20(-%20z%20+%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20+%20\frac{\sin{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}{\cos{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}%20\right%20)}}{\cos{\left%20(-%20z%20+%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20+%20\frac{\sin{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}{\cos{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D3(ϵ)](http://latex.codecogs.com/svg.latex?D_3(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20-%20\frac{\sin{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}{\cos{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}%20+%20\frac{\sin{\left%20(-%20z%20+%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20+%20\frac{\sin{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}{\cos{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}%20\right%20)}}{\cos{\left%20(-%20z%20+%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20+%20\frac{\sin{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}{\cos{\left%20(z%20-%20\frac{\sin{\left%20(z%20\right%20)}}{\cos{\left%20(z%20\right%20)}}%20\right%20)}}%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (10):
 
@@ -171,7 +171,7 @@ nrset(f,m,2)
 
 ![img/nf10-iter.png](img/nf10-iter.png)
 
-![](D_2(\epsilon) = \left\\{z\in\mathbb{C}:\left|\\,z - \frac{1}{\cos{\left (z \right )}} \left(1 + i\right) \left(\sin{\left (z \right )} - 1\right) - \frac{\left(1 + i\right) \left(\sin{\left (z - \frac{1}{\cos{\left (z \right )}} \left(1 + i\right) \left(\sin{\left (z \right )} - 1\right) \right )} - 1\right)}{\cos{\left (z - \frac{1}{\cos{\left (z \right )}} \left(1 + i\right) \left(\sin{\left (z \right )} - 1\right) \right )}} - r_i\\,\right|<\epsilon,\\,\forall r_i(\\,f(r_i)=0 )\right\\})
+![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20-%20\frac{\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}%20-%201\right)}{\cos{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (11):
 
@@ -184,7 +184,7 @@ nrset(f,m,1)
 
 ![img/nf11-limit.png](img/nf11-limit.png)
 
-![](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\left(1.0%20+%200.4%20i\right)%20\left(z^{6}%20-%20z^{3}%20-%201\right)}{6%20z^{5}%20-%203%20z^{2}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D1(ϵ)](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\left(1.0%20+%200.4%20i\right)%20\left(z^{6}%20-%20z^{3}%20-%201\right)}{6%20z^{5}%20-%203%20z^{2}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (12):
 
@@ -196,7 +196,7 @@ PlotNF(nf,δ,f,m,c="hsv")
 
 ![img/nf12-limit.png](img/nf12-limit.png)
 
-![](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20+%20\frac{\cos{\left%20(z%20\right%20)}%20-%201}{\sin{\left%20(z%20\right%20)}}%20+%20\frac{\cos{\left%20(z%20+%20\frac{\cos{\left%20(z%20\right%20)}%20-%201}{\sin{\left%20(z%20\right%20)}}%20\right%20)}%20-%201}{\sin{\left%20(z%20+%20\frac{\cos{\left%20(z%20\right%20)}%20-%201}{\sin{\left%20(z%20\right%20)}}%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20+%20\frac{\cos{\left%20(z%20\right%20)}%20-%201}{\sin{\left%20(z%20\right%20)}}%20+%20\frac{\cos{\left%20(z%20+%20\frac{\cos{\left%20(z%20\right%20)}%20-%201}{\sin{\left%20(z%20\right%20)}}%20\right%20)}%20-%201}{\sin{\left%20(z%20+%20\frac{\cos{\left%20(z%20\right%20)}%20-%201}{\sin{\left%20(z%20\right%20)}}%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (13):
 
@@ -222,7 +222,7 @@ nrset(f,m,1)
 
 ![img/nf14-iter.png](img/nf14-iter.png)
 
-![](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\left(1.0%20-%200.24%20i\right)%20\left(z^{5}%20-%203%20i%20z^{3}%20-%20z^{2}%20\left(5%20+%202%20i\right)%20+%203%20z%20+%201\right)}{5%20z^{4}%20-%209%20i%20z^{2}%20-%202%20z%20\left(5%20+%202%20i\right)%20+%203}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D1(ϵ)](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\left(1.0%20-%200.24%20i\right)%20\left(z^{5}%20-%203%20i%20z^{3}%20-%20z^{2}%20\left(5%20+%202%20i\right)%20+%203%20z%20+%201\right)}{5%20z^{4}%20-%209%20i%20z^{2}%20-%202%20z%20\left(5%20+%202%20i\right)%20+%203}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (15):
 
@@ -235,7 +235,7 @@ nrset(f,m,1)
 
 ![img/nf15-limit.png](img/nf15-limit.png)
 
-![](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,-%20z%20\left(1%20-%20i\right)%20\log{\left%20(z%20\right%20)}%20+%20z%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D1(ϵ)](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,-%20z%20\left(1%20-%20i\right)%20\log{\left%20(z%20\right%20)}%20+%20z%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (16):
 
@@ -247,18 +247,19 @@ nrset(f,m,1)
 ```
 ![img/nf16-limit.png](img/nf16-limit.png)
 
-![](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,-%20\frac{z%20z^{-4%20-%203%20i}}{4%20+%203%20i}%20\left(2.1%20z^{4%20+%203%20i}%20-%202.1\right)%20+%20z%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![D1(ϵ)](http://latex.codecogs.com/svg.latex?D_1(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,-%20\frac{z%20z^{-4%20-%203%20i}}{4%20+%203%20i}%20\left(2.1%20z^{4%20+%203%20i}%20-%202.1\right)%20+%20z%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 Generalized Newton fractal example (17):
 
 ```Julia
 f=z -> e^z+1; m=1; δ=2π
+display(nrset(f,m,1))
 nf=NewtonFractal(m,f,[-δ,δ,-δ,δ],500,ϵ=0.01,iter=true,N=27)
 PlotNF(nf,δ,f,m,c="brg")
-nrset(f,m,1)
+orbitplot(newton(f,m), [-δ δ 5],11,3,147); PyPlot.ylim(-10,7)
 ```
 
-![](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\left(e^{z}%20+%201\right)%20e^{-%20z}%20-%20\left(e^{z%20-%20\left(e^{z}%20+%201\right)%20e^{-%20z}}%20+%201\right)%20e^{-%20z%20+%20\left(e^{z}%20+%201\right)%20e^{-%20z}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\\,f(r_i)=0%20)\right\\})
+![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\left(e^{z}%20+%201\right)%20e^{-%20z}%20-%20\left(e^{z%20-%20\left(e^{z}%20+%201\right)%20e^{-%20z}}%20+%201\right)%20e^{-%20z%20+%20\left(e^{z}%20+%201\right)%20e^{-%20z}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\\,f(r_i)=0%20)\right\\})
 
-![img/nf17-orbit.png](img/nf17-orbit.png)
 ![img/nf17-iter.png](img/nf17-iter.png)
+![img/nf17-orbit.png](img/nf17-orbit.png)
