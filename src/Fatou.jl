@@ -58,12 +58,12 @@ function PlotNF(nf::Union{Array{Float64,2},Array{Int,2}}, ∂=0, f::Function=0, 
     else typeof(∂)!=Array{Float64,1} && (∂=[-∂,∂,-∂,∂]);
       isempty(c) ? imshow(nf,extent=∂) : imshow(nf,cmap=c,extent=∂); end
     # determine if plot is Iteration, Roots, or Limit
-    typeof(nf) == Matrix{Int64} ? t = L", Iter. " :
-      m==1 ? t = L", Roots" : t = L", Limit"
+    typeof(nf) == Matrix{Int64} ? t = L", iter. " :
+      m==1 ? t = L", roots" : t = L", limit"
     # annotate title using LaTeX
     f!=0 && title(latexstring("z\\mapsto $(SymPy.latex(f(Sym("z")))),\\, m = $m")*t);
     # annotate y-axis with Newton's method
-    ylabel(L"Julia\,Set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
+    ylabel(L"Julia\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
     colorbar(); tight_layout(); end
 
 end # module
