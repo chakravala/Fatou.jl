@@ -32,9 +32,6 @@ latexstring("D_0(\\epsilon) = \\left\\{ z\\in\\mathbb{C}: \\left|\\,z $setstr")
 nrset(f::Function,m,j) = latexstring(
   "$ds D_$j(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,$(nL(f,m,j)) $setstr")
 
-function NewtonFractal(m::Number, p::Function, γ::Number, n::Int=176; N::Int=35, ϵ::Float64=0.,exp::Number=0,iter::Bool=false,col::Function=(x, y, z)->x*y^z)
-  return NewtonFractal(m,p,[-γ,γ,-γ,γ],n,N,ϵ,exp,iter,col); end
-
 function NewtonFractal(m::Number, p::Function, ∂::Array{Float64,1}, n::Int=176; N::Int=35, ϵ::Float64=0.,exp::Number=0,iter::Bool=false,col::Function=(x, y, z)->x*y^z)
   # define Complex{Float64} versions of polynomial and constant for speed
   p0(z::Complex{Float64}) = p(z); m = convert(Complex{Float64},m)
