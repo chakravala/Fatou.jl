@@ -6,7 +6,7 @@ export orbitplot
 function orbitplot(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
   f(x::Float64) = u(x);
   # prepare for next figure
-  figure(); hold(true)
+  figure()
   # initalize array to depth
   N = zeros(incr,depth+1);
   bis = zeros(3); bis[1:length(bi)] = bi[:];
