@@ -4,7 +4,7 @@
 export orbitplot
 
 function orbitplot(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
-  f(x::Float64) = u(x);
+  f = sym2fun(u(Sym(:x)),:Float64) |> eval
   # prepare for next figure
   figure()
   # initalize array to depth
@@ -13,11 +13,9 @@ function orbitplot(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr:
   # set x-axis coordinate set
   x = linspace(bi[1],bi[2],incr); N[:,1] = x[:]
   # loop over all discrete x-axis points in set
-  for n ∈ 1:length(x)
-    # loop function composition at x val
-    for t ∈ 1:depth
-      N[n,t+1] = f(N[n,t]);
-    end
+  # loop function composition at x val
+  for t ∈ 1:depth
+    N[:,t+1] = f.(N[:,t])
   end
   # plot background lines
   plot(x[:],N[:,1],"k--",x[:],N[:,2])
@@ -58,5 +56,6 @@ function orbitplot(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr:
   title(latexstring("\$\\chi \\mapsto $fune\$$funt"))
   # set legend
   legend(vcat([L"$\gamma=\chi$",L"$\phi(\chi)$",L"(\chi_\eta,\phi(\chi_n))"],[latexstring("\\phi^{$x}(\\chi)") for x ∈ 2:depth],funs))
+  tight_layout()
   return
 end

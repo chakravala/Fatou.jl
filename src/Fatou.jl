@@ -12,7 +12,7 @@ include("orbitplot.jl"); ds = "\\displaystyle"
 sym2fun(expr,typ) = Expr(:function, Expr(:call, gensym(), Expr(:(::), map(Symbol,free_symbols(expr))...,typ)), SymPy.walk_expression(expr))
 
 # evaluate the expression and assign to a handle
-p1(f::Function) = eval(sym2fun(diff(f(Sym("z"))),:Any))
+p1(f::Function) = sym2fun(diff(f(Sym("z"))),:Any) |> eval
 
 # we can substitute the expression into Newton's method and display it with LaTeX
 newton(f::Function,m) = z -> z - m*f(z)/p1(f)(z)
@@ -21,7 +21,7 @@ newton(f::Function,m) = z -> z - m*f(z)/p1(f)(z)
 recomp(f::Function,x::Number,j::Int) = j > 1 ? f(recomp(f,x,j-1)) : f(x)
 
 # we can convert the j-th function composition into a latex expresion
-nL(f::Function,m,j) = SymPy.latex(recomp(newton(f,m),Sym(:z),j))
+nL(f::Function,m,j) = recomp(newton(f,m),Sym(:z),j) |> SymPy.latex
 
 # set of points that are within an ϵ neighborhood of the roots ri of the function f
 setstr = "- r_i\\,\\right|<\\epsilon,\\,\\forall r_i(\\,f(r_i)=0 )\\right\\}"
@@ -35,7 +35,7 @@ function NewtonFractal(m::Number, p::Function, ∂, n::Int=176; N::Int=35, ϵ::F
   typeof(∂) ≠ Array{Float64,1} && (∂ = [-∂,∂,-∂,∂])
   # define Complex{Float64} versions of polynomial and constant for speed
   p0(z::Complex{Float64}) = p(z); m = convert(Complex{Float64},m)
-  p1 = eval(sym2fun(diff(p(Sym("z"))),:(Complex{Float64})))
+  p1 = sym2fun(diff(p(Sym(:z))),:(Complex{Float64})) |> eval
   newton(z::Complex{Float64})::Complex{Float64} = z - m*p0(z)/p1(z)
   # define function for computing orbit of a z0 input
   function nf(z::Complex{Float64})::Number
@@ -58,7 +58,7 @@ function PlotNF(nf::Union{Array{Float64,2},Array{Int,2}}, ∂=0, f::Function=0, 
     typeof(nf) == Matrix{Int64} ? t = L", iter. " :
       m==1 ? t = L", roots" : t = L", limit"
     # annotate title using LaTeX
-    f≠0 && title(latexstring("f:z\\mapsto $(SymPy.latex(f(Sym("z")))),\\, m = $m")*t);
+    f≠0 && title(latexstring("f:z\\mapsto $(SymPy.latex(f(Sym(:z)))),\\, m = $m")*t);
     # annotate y-axis with Newton's method
     ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
     colorbar(); tight_layout(); end
