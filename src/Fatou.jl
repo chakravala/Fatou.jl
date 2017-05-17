@@ -4,17 +4,36 @@ using SymPy,PyPlot
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
 
-export julia, mandelbrot, newton, nrset, plot, fatou
-
-funk(r::String) = :((z,c)->$(parse(r)))
-funK(r::String) = :((z,n,e)->$(parse(r)))
+export fatou, juliafill, mandelbrot, newton, basin, plot
 
 abstract AbstractFatou
-type FatouMeta <: AbstractFatou
+
+"""
+    Fatou.Define(::String; # primary map
+      Q::String="abs2(z)", # escape criterion
+      C::String="angle(z)/(2π))*n^e", # coloring
+      ∂=π/2, # Array{Float64,1} # Bounds
+      n::Integer=176, # number of vertical grid points
+      N::Integer=35, # number of iterations
+      ϵ::Number=4, # epsilon Limit criterion
+      m::Number=0, # Newton multiplicity factor
+      e::Number=0, # iteration color exponent
+      iter::Bool=false, # toggle iteration mode
+      newt::Bool=false, # toggle Newton mode
+      mandel::Bool=false, # toggle Mandelbrot mode
+      orig::String=F, # original Newton map
+      start=nothing, # orbit starting point
+      orbit::Int=0, # orbit cobweb depth
+      depth::Int=1, # depth of function composition
+      cmap::String="") # imshow color map
+
+`Define` the metadata for a `Fatou.FilledSet`.
+"""
+type Define <: AbstractFatou
   F::Function # primary map
   Q::Function # escape criterion
   C::Function # complex fixed point coloring
-  ∂::Array{Number,1} # bounds
+  ∂::Array{Float64,1} # bounds
   n::UInt16 # number of grid points
   N::UInt8 # number of iterations
   ϵ::Float64 # epsilon Limit criterion
@@ -28,7 +47,7 @@ type FatouMeta <: AbstractFatou
   orbit::Int # orbit cobweb depth
   depth::Int # depth of function composition
   cmap::String # imshow color map
-  function FatouMeta(F::String;
+  function Define(F::String;
       Q::String="abs2(z)",
       C::String="angle(z)/(2π))*n^e",
       ∂=π/2,
@@ -45,21 +64,61 @@ type FatouMeta <: AbstractFatou
       orbit::Int=0,
       depth::Int=1,
       cmap::String="")
-    typeof(∂) ≠ Array{Float64,1} && (∂ = [-float(∂),∂,-∂,∂])
+    !(typeof(∂) <: Array) && (∂ = [-float(∂),∂,-∂,∂])
+    length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
     !newt ? (f = funk(F) |> eval; q = funk(Q) |> eval) :
       (f = newton_raphson(eval(funk(F)),m); q = eval(funk("abs("*F*")")))
     c = funK(C) |> eval; o = funk(orig) |> eval
-    return new(f,q,c,∂,UInt16(n),UInt8(N),float(ϵ),m,e,iter,newt,mandel,o,start,orbit,depth,cmap);
+    return new(f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),m,e,iter,newt,mandel,o,start,orbit,depth,cmap);
   end; end
 
-immutable FatouSet <: AbstractFatou
-  meta::FatouMeta
+"""
+    Fatou.FilledSet(::Fatou.Define)
+
+Compute the `Fatou.FilledSet` set using `Fatou.Define`.
+"""
+immutable FilledSet <: AbstractFatou
+  meta::Define
   set::Union{Matrix{UInt8},Matrix{Float64}}
-  FatouSet(K::FatouMeta) = new(K,FatouComp(K)); end
+  FilledSet(K::Define) = new(K,Compute(K)); end
 
-fatou(K::FatouMeta) = FatouSet(K)
+  """
+      fatou(::Fatou.Define)
 
-function julia(F::String;
+Compute the `Fatou.FilledSet` set using `Fatou.Define`.
+
+# Examples
+```Julia
+julia> fatou(K)
+```
+"""
+fatou(K::Define) = FilledSet(K)
+
+"""
+    juliafill(::String; # primary map
+      Q::String="abs2(z)", # escape criterion
+      C::String="angle(z)/(2π))*n^e", # coloring
+      ∂=π/2, # Array{Float64,1} # Bounds
+      n::Integer=176, # number of vertical grid points
+      N::Integer=35, # number of iterations
+      ϵ::Number=4, # epsilon Limit criterion
+      m::Number=0, # Newton multiplicity factor
+      e::Number=0, # iteration color exponent
+      iter::Bool=false, # toggle iteration mode
+      newt::Bool=false, # toggle Newton mode
+      start=nothing, # orbit starting point
+      orbit::Int=0, # orbit cobweb depth
+      depth::Int=1, # depth of function composition
+      cmap::String="") # imshow color map
+
+`Define` filled Julia basin in `Fatou`
+
+# Exmaples
+```Julia
+julia> juliafill("z^2-0.06+0.67im",∂=[-1.5,1.5,-1,1],N=80,n=1501,cmap="RdGy")
+```
+"""
+function juliafill(F::String;
     Q::String= "abs2(z)",
     C::String= "(angle(z)/(2π))*n^e",
     ∂=π/2,
@@ -74,12 +133,36 @@ function julia(F::String;
     orbit::Int=0,
     depth::Int=1,
     cmap::String="")
-  return FatouMeta(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
+  return Define(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
+"""
+    mandelbrot(::String; # primary map
+      Q::String="abs2(z)", # escape criterion
+      C::String="angle(z)/(2π))*n^e", # coloring
+      ∂=π/2, # Array{Float64,1} # Bounds
+      n::Integer=176, # number of vertical grid points
+      N::Integer=35, # number of iterations
+      ϵ::Number=4, # epsilon Limit criterion
+      m::Number=0, # Newton multiplicity factor
+      e::Number=0, # iteration color exponent
+      iter::Bool=false, # toggle iteration mode
+      newt::Bool=false, # toggle Newton mode
+      start=nothing, # orbit starting point
+      orbit::Int=0, # orbit cobweb depth
+      depth::Int=1, # depth of function composition
+      cmap::String="") # imshow color map
+
+`Define` Mandelbrot basin in `Fatou`
+
+# Examples
+```Julia
+julia> mandelbrot("z^2+c",n=800,N=20,∂=[-1.91,0.51,-1.21,1.21],cmap="nipy_spectral",iter=false)
+```
+"""
 function mandelbrot(F::String;
     Q::String= "abs2(z)",
-    C::String= "exp(-abs(z))",
     ∂=π/2,
+    C::String= "exp(-abs(z))",
     n::Integer=176,
     N::Integer=35,
     ϵ::Number=4,
@@ -91,8 +174,31 @@ function mandelbrot(F::String;
     orbit::Int=0,
     depth::Int=1,
     cmap::String="")
-  return FatouMeta(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=newt,mandel=true,start=start,orbit=orbit,depth=depth,cmap=cmap); end
+  return Define(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=newt,mandel=true,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
+"""
+    newton(::String; # primary map
+      C::String="angle(z)/(2π))*n^e", # coloring
+      ∂=π/2, # Array{Float64,1} # Bounds
+      n::Integer=176, # number of vertical grid points
+      N::Integer=35, # number of iterations
+      ϵ::Number=4, # epsilon Limit criterion
+      m::Number=0, # Newton multiplicity factor
+      e::Number=0, # iteration color exponent
+      iter::Bool=false, # toggle iteration mode
+      mandel::Bool=false, # toggle Mandelbrot mode
+      start=nothing, # orbit starting point
+      orbit::Int=0, # orbit cobweb depth
+      depth::Int=1, # depth of function composition
+      cmap::String="") # imshow color map
+
+`Define` Newton basin in `Fatou`
+
+# Examples
+```Julia
+julia> newton("z^3-1",n=800,iter=false,cmap="brg")
+```
+"""
 function newton(F::String;
     C::String= "(angle(z)/(2π))*n^e",
     ∂=π/2,
@@ -107,35 +213,31 @@ function newton(F::String;
     orbit::Int=0,
     depth::Int=1,
     cmap::String="")
-  return FatouMeta(F,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=true,mandel=mandel,orig=F,start=start,orbit=orbit,depth=depth,cmap=cmap); end
+  return Define(F,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=true,mandel=mandel,orig=F,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
-# generate function code by constructing the lambda expression
-sym2fun(expr,typ) = Expr(:function, Expr(:call, gensym(), map(s->Expr(:(::),s,typ),sort!(Symbol.(free_symbols(expr))))..., Expr(:(...),:zargs)), SymPy.walk_expression(expr))
+# load additional functionality
+include("internals.jl"); include("orbitplot.jl")
 
-# evaluate the expression and assign to a handle
-p1(f::Function) = sym2fun(diff(f(Sym(:a),Sym(:b))),:Any) |> eval
+"""
+    basin(::Fatou.Define, ::Integer)
 
-# we can substitute the expression into Newton's method and display it with LaTeX
-newton_raphson(f::Function,m) = (z,c) -> z - m*f(z,c)/p1(f)(z,c)
+Output the `j`-th basin of `Fatou.Define` as LaTeX.
+Each subsequent iteration of the Newton-Raphson method will yield a more complicated set.
 
-# define recursive composition on functions
-recomp(f::Function,x::Number,j::Int) = j > 1 ? f(recomp(f,x,j-1),0) : f(x,0)
+# Examples
+```Julia
+julia> basin(newton("z^3-1"),2)
+L"\$\\displaystyle D_2(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,z - \\frac{\\left(z - \\frac{z^{3} - 1}{3 z^{2}}\\right)^{3} - 1}{3 \\left(z - \\frac{z^{3} - 1}{3 z^{2}}\\right)^{2}} - \\frac{z^{3} - 1}{3 z^{2}} - r_i\\,\\right|<\\epsilon,\\,\\forall r_i(\\,f(r_i)=0 )\\right\\}\$"
+```
+"""
+basin(K::Define,j) = K.newt ? nrset(K.orig,K.m,j) : jset(K.F,j)
 
-# we can convert the j-th function composition into a latex expresion
-nL(f::Function,m,j) = recomp(newton_raphson(f,m),Sym(:z),j) |> SymPy.latex
+"""
+    Compute(::Fatou.Define)::Union{Matrix{UInt8},Matrix{Float64}}
 
-# set of points that are within an ϵ neighborhood of the roots ri of the function f
-setstr = "- r_i\\,\\right|<\\epsilon,\\,\\forall r_i(\\,f(r_i)=0 )\\right\\}"
-latexstring("D_0(\\epsilon) = \\left\\{ z\\in\\mathbb{C}: \\left|\\,z $setstr")
-
-# each subsequent iteration of the Newton method will yield a more complicated set
-nrset(f::Function,m,j) = latexstring(
-  "$ds D_$j(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,$(nL(f,m,j)) $setstr")
-nrset(K::FatouMeta,j) = nrset(K.orig,K.m,j)
-
-include("orbitplot.jl"); ds = "\\displaystyle"
-
-function FatouComp(K::FatouMeta)::Union{Matrix{UInt8},Matrix{Float64}}
+`Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
+"""
+function Compute(K::Define)::Union{Matrix{UInt8},Matrix{Float64}}
   # define Complex{Float64} versions of polynomial and constant for speed
   f = (sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
   h = (sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
@@ -149,27 +251,26 @@ function FatouComp(K::FatouMeta)::Union{Matrix{UInt8},Matrix{Float64}}
     return (K.iter ? zn::UInt8 : c(z,zn/K.N,K.e)::Float64)::Union{UInt8,Float64}; end
   # generate coordinate grid
   Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
-  x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[3],K.∂[4],Kyn)
+  x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[4],K.∂[3],Kyn)
   # apply Newton-Orbit function element-wise to coordinate grid
   return @time nf.(x' .+ im*y); end
 
 import PyPlot: plot
 
-function plot(K::FatouSet;c::String="")
+function plot(K::FilledSet;c::String="",bare::Bool=false)
   # plot figure using imshow based in input preferences
   figure(); isempty(c) && (c = K.meta.cmap)
   isempty(c) ? imshow(K.set,extent=K.meta.∂) : imshow(K.set,cmap=c,extent=K.meta.∂)
-  # determine if plot is Iteration, Roots, or Limit
-  typeof(K.set) == Matrix{UInt8} ? t = L"iter. " :
-    K.meta.m==1 ? t = L"roots" : t = L"limit"
+  tight_layout(); if !bare
+    # determine if plot is Iteration, Roots, or Limit
+    typeof(K.set) == Matrix{UInt8} ? t = L"iter. " :
+      K.meta.m==1 ? t = L"roots" : t = L"limit"
     # annotate title using LaTeX
-    if K.meta.newt
-      title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.orig(Sym(:z),Sym(:c)))),\\, m = $(K.meta.m), ")*t)
+    ttext = "f:z\\mapsto $(SymPy.latex(K.meta.orig(Sym(:z),Sym(:c)))),\\,"
+    if K.meta.newt; title(latexstring("$ttext m = $(K.meta.m), ")*t)
       # annotate y-axis with Newton's method
       ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
-    else
-      title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.F(Sym(:z),Sym(:c)))),\\,")*t)
-    end
-    tight_layout(); colorbar(); end
+    else; title(latexstring("$ttext")*t)
+    end; tight_layout(); colorbar(); end; end
 
 end # module
