@@ -4,9 +4,7 @@ using SymPy,PyPlot
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
 
-export julia, mandelbrot, newton, nrset, plot, FatouSet, FatouMeta
-
-include("orbitplot.jl"); ds = "\\displaystyle"
+export julia, mandelbrot, newton, nrset, plot, fatou
 
 abstract AbstractFatou
 type FatouMeta <: AbstractFatou
@@ -23,6 +21,10 @@ type FatouMeta <: AbstractFatou
   newt::Bool # toggle Newton mode
   mandel::Bool # toggle Mandelbrot mode
   orig::Function # original Newton map
+  start # orbit starting point
+  orbit::Int # orbit cobweb depth
+  depth::Int # depth of function composition
+  cmap::String
   function FatouMeta(F::Function;
       Q::Function=(z,c)->abs2(z),
       ∂=π/2,
@@ -35,14 +37,21 @@ type FatouMeta <: AbstractFatou
       iter::Bool=false,
       newt::Bool=false,
       mandel::Bool=false,
-      orig::Function=F)
+      orig::Function=F,
+      start=nothing,
+      orbit::Int=0,
+      depth::Int=1,
+      cmap::String="")
     typeof(∂) ≠ Array{Float64,1} && (∂ = [-float(∂),∂,-∂,∂])
-    return new(F,Q,C,∂,n,N,float(ϵ),m,e,iter,newt,mandel,orig); end; end
+    return new(F,Q,C,∂,n,N,float(ϵ),m,e,iter,newt,mandel,orig,start,orbit,depth,cmap);
+  end; end
 
 immutable FatouSet <: AbstractFatou
   meta::FatouMeta
   set::Union{Matrix{UInt8},Matrix{Float64}}
   FatouSet(K::FatouMeta) = new(K,FatouComp(K)); end
+
+fatou(K::FatouMeta) = FatouSet(K)
 
 function julia(F::Function;
     ∂=π/2,
@@ -53,8 +62,12 @@ function julia(F::Function;
     m::Number=0,
     e::Number=0,
     C::Function=(z,n,e)->(angle(z)/(2π))*n^e,
-    newt::Bool=false)
-  return FatouMeta(F,∂=∂,n=n,N=N,iter=iter,Q=Q,m=m,e=e,C=C,newt=newt); end
+    newt::Bool=false,
+    start=nothing,
+    orbit::Int=0,
+    depth::Int=1,
+    cmap::String="")
+  return FatouMeta(F,∂=∂,n=n,N=N,iter=iter,Q=Q,m=m,e=e,C=C,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
 function mandelbrot(F::Function;
     ∂=π/2,
@@ -65,8 +78,12 @@ function mandelbrot(F::Function;
     m::Number=0,
     e::Number=0,
     C::Function=(z,n,e)->exp(-abs(z)),
-    newt::Bool=false)
-  return FatouMeta(F,C=C,∂=∂,n=n,N=N,mandel=true,iter=iter,Q=Q,m=m,e=e,newt=newt); end
+    newt::Bool=false,
+    start=nothing,
+    orbit::Int=0,
+    depth::Int=1,
+    cmap::String="")
+  return FatouMeta(F,C=C,∂=∂,n=n,N=N,mandel=true,iter=iter,Q=Q,m=m,e=e,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
 function newton(F::Function;
     ∂=π/2,
@@ -77,8 +94,12 @@ function newton(F::Function;
     e::Number=0,
     C::Function=(z,n,e)->(angle(z)/(2π))*n^e,
     mandel::Bool=false,
-    ϵ::Number=0.1)
-  return FatouMeta(newton_raphson(F,m),∂=∂,n=n,N=N,iter=iter,Q=(z,c)->abs(F(z,c)),m=m,e=e,C=C,newt=true,mandel=mandel,ϵ=ϵ,orig=F); end
+    ϵ::Number=0.1,
+    start=nothing,
+    orbit::Int=0,
+    depth::Int=1,
+    cmap::String="")
+  return FatouMeta(newton_raphson(F,m),∂=∂,n=n,N=N,iter=iter,Q=(z,c)->abs(F(z,c)),m=m,e=e,C=C,newt=true,mandel=mandel,ϵ=ϵ,orig=F,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
 # generate function code by constructing the lambda expression
 sym2fun(expr,typ) = Expr(:function, Expr(:call, gensym(), map(s->Expr(:(::),s,typ),sort!(Symbol.(free_symbols(expr))))..., Expr(:(...),:zargs)), SymPy.walk_expression(expr))
@@ -103,36 +124,41 @@ latexstring("D_0(\\epsilon) = \\left\\{ z\\in\\mathbb{C}: \\left|\\,z $setstr")
 nrset(f::Function,m,j) = latexstring(
   "$ds D_$j(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,$(nL(f,m,j)) $setstr")
 
-  function FatouComp(K::FatouMeta)
-    # define Complex{Float64} versions of polynomial and constant for speed
-    f = sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval
-    h = sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval
-    # define function for computing orbit of a z0 input
-    function nf(z0::Complex{Float64})::Number
-      K.mandel ? (z = 0.0 + 0.0im): (z = z0); zn = 0
-      while (K.newt ? (h(z,z0)>K.ϵ) : (h(z,z0)<K.ϵ)) && K.N>zn
-        z = f(z,z0); zn+=1; end; #end
-      # return the normalized argument of z or iteration count
-      return Number(K.iter ? UInt8(zn) : K.C(z,zn/K.N,K.e)); end
-    # generate coordinate grid
-    x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[3],K.∂[4],K.n)
-    # apply Newton-Orbit function element-wise to coordinate grid
-    return @time nf.(x' .+ im*y); end
+include("orbitplot.jl"); ds = "\\displaystyle"
 
-  function plot(K::FatouSet;c::String="")
-    # plot figure using imshow based in input preferences
-    figure(); isempty(c) ? imshow(K.set,extent=K.meta.∂) : imshow(K.set,cmap=c,extent=K.meta.∂)
-    # determine if plot is Iteration, Roots, or Limit
-    typeof(K.set) == Matrix{UInt8} ? t = L"iter. " :
-      K.meta.m==1 ? t = L"roots" : t = L"limit"
-      # annotate title using LaTeX
-      if K.meta.newt
-        title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.orig(Sym(:z),Sym(:c)))),\\, m = $(K.meta.m), ")*t)
-        # annotate y-axis with Newton's method
-        ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
-      else
-        title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.F(Sym(:z),Sym(:c)))),\\,")*t)
-      end
-      colorbar(); tight_layout(); end
+function FatouComp(K::FatouMeta)
+  # define Complex{Float64} versions of polynomial and constant for speed
+  f = sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval
+  h = sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval
+  # define function for computing orbit of a z0 input
+  function nf(z0::Complex{Float64})::Number
+    K.mandel ? (z = 0.0 + 0.0im): (z = z0); zn = 0
+    while (K.newt ? (h(z,z0)>K.ϵ) : (h(z,z0)<K.ϵ)) && K.N>zn
+      z = f(z,z0); zn+=1; end; #end
+    # return the normalized argument of z or iteration count
+    return Number(K.iter ? UInt8(zn) : K.C(z,zn/K.N,K.e)); end
+  # generate coordinate grid
+  x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[3],K.∂[4],K.n)
+  # apply Newton-Orbit function element-wise to coordinate grid
+  return @time nf.(x' .+ im*y); end
+
+import PyPlot: plot
+
+function plot(K::FatouSet;c::String="")
+  # plot figure using imshow based in input preferences
+  figure(); isempty(c) && (c = K.meta.cmap)
+  isempty(c) ? imshow(K.set,extent=K.meta.∂) : imshow(K.set,cmap=c,extent=K.meta.∂)
+  # determine if plot is Iteration, Roots, or Limit
+  typeof(K.set) == Matrix{UInt8} ? t = L"iter. " :
+    K.meta.m==1 ? t = L"roots" : t = L"limit"
+    # annotate title using LaTeX
+    if K.meta.newt
+      title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.orig(Sym(:z),Sym(:c)))),\\, m = $(K.meta.m), ")*t)
+      # annotate y-axis with Newton's method
+      ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
+    else
+      title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.F(Sym(:z),Sym(:c)))),\\,")*t)
+    end
+    colorbar(); tight_layout(); end
 
 end # module
