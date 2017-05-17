@@ -5,7 +5,7 @@ export orbit
 
 function orbit(K::FatouMeta)
   K.start == nothing ? (bi = K.∂[1:2]') : (bi = [K.∂[1:2]...,K.start]')
-    orbit(z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,K.n); end
+    orbit(z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n)); end
 
 function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
   f = sym2fun(u(Sym(:x)),:Float64) |> eval

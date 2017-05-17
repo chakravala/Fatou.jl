@@ -15,8 +15,8 @@ type FatouMeta <: AbstractFatou
   Q::Function # escape criterion
   C::Function # complex fixed point coloring
   ∂::Array{Number,1} # bounds
-  n::Integer # number of grid points
-  N::Integer # number of iterations
+  n::UInt16 # number of grid points
+  N::UInt8 # number of iterations
   ϵ::Float64 # epsilon Limit criterion
   m::Number # newton multiplicity factor
   e::Number # iteration color exponent
@@ -27,7 +27,7 @@ type FatouMeta <: AbstractFatou
   start # orbit starting point
   orbit::Int # orbit cobweb depth
   depth::Int # depth of function composition
-  cmap::String
+  cmap::String # imshow color map
   function FatouMeta(F::String;
       Q::String="abs2(z)",
       C::String="angle(z)/(2π))*n^e",
@@ -49,7 +49,7 @@ type FatouMeta <: AbstractFatou
     !newt ? (f = funk(F) |> eval; q = funk(Q) |> eval) :
       (f = newton_raphson(eval(funk(F)),m); q = eval(funk("abs("*F*")")))
     c = funK(C) |> eval; o = funk(orig) |> eval
-    return new(f,q,c,∂,n,N,float(ϵ),m,e,iter,newt,mandel,o,start,orbit,depth,cmap);
+    return new(f,q,c,∂,UInt16(n),UInt8(N),float(ϵ),m,e,iter,newt,mandel,o,start,orbit,depth,cmap);
   end; end
 
 immutable FatouSet <: AbstractFatou
@@ -131,23 +131,25 @@ latexstring("D_0(\\epsilon) = \\left\\{ z\\in\\mathbb{C}: \\left|\\,z $setstr")
 # each subsequent iteration of the Newton method will yield a more complicated set
 nrset(f::Function,m,j) = latexstring(
   "$ds D_$j(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,$(nL(f,m,j)) $setstr")
-nrset(K::FatouMeta,j) = nrset(K.F,K.m,j)
+nrset(K::FatouMeta,j) = nrset(K.orig,K.m,j)
 
 include("orbitplot.jl"); ds = "\\displaystyle"
 
-function FatouComp(K::FatouMeta)
+function FatouComp(K::FatouMeta)::Union{Matrix{UInt8},Matrix{Float64}}
   # define Complex{Float64} versions of polynomial and constant for speed
-  f = sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval
-  h = sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval
+  f = (sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+  h = (sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+  c(z::Complex{Float64},n::Number,e::Number) = K.C(z,n,e)::Float64
   # define function for computing orbit of a z0 input
-  function nf(z0::Complex{Float64})::Number
-    K.mandel ? (z = 0.0 + 0.0im): (z = z0); zn = 0
-    while (K.newt ? (h(z,z0)>K.ϵ) : (h(z,z0)<K.ϵ)) && K.N>zn
-      z = f(z,z0); zn+=1; end; #end
+  function nf(z0::Complex{Float64})::Union{UInt8,Float64}
+    K.mandel ? (z = 0.0 + 0.0im): (z = z0); zn = 0x00
+    while (K.newt ? (h(z,z0)::Float64>K.ϵ)::Bool : (h(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
+      z = f(z,z0)::Complex{Float64}; zn+=0x01; end; #end
     # return the normalized argument of z or iteration count
-    return Number(K.iter ? UInt8(zn) : K.C(z,zn/K.N,K.e)); end
+    return (K.iter ? zn::UInt8 : c(z,zn/K.N,K.e)::Float64)::Union{UInt8,Float64}; end
   # generate coordinate grid
-  x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[3],K.∂[4],K.n)
+  Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
+  x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[3],K.∂[4],Kyn)
   # apply Newton-Orbit function element-wise to coordinate grid
   return @time nf.(x' .+ im*y); end
 
@@ -168,6 +170,6 @@ function plot(K::FatouSet;c::String="")
     else
       title(latexstring("f:z\\mapsto $(SymPy.latex(K.meta.F(Sym(:z),Sym(:c)))),\\,")*t)
     end
-    colorbar(); tight_layout(); end
+    tight_layout(); colorbar(); end
 
 end # module
