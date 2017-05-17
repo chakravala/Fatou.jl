@@ -6,6 +6,9 @@ using SymPy,PyPlot
 
 export julia, mandelbrot, newton, nrset, plot, fatou
 
+funk(r::String) = :((z,c)->$(parse(r)))
+funK(r::String) = :((z,n,e)->$(parse(r)))
+
 abstract AbstractFatou
 type FatouMeta <: AbstractFatou
   F::Function # primary map
@@ -25,25 +28,28 @@ type FatouMeta <: AbstractFatou
   orbit::Int # orbit cobweb depth
   depth::Int # depth of function composition
   cmap::String
-  function FatouMeta(F::Function;
-      Q::Function=(z,c)->abs2(z),
+  function FatouMeta(F::String;
+      Q::String="abs2(z)",
+      C::String="angle(z)/(2π))*n^e",
       ∂=π/2,
       n::Integer=176,
       N::Integer=35,
       ϵ::Number=4,
       m::Number=0,
       e::Number=0,
-      C::Function=(z,n,e)->(angle(z)/(2π))*n^e,
       iter::Bool=false,
       newt::Bool=false,
       mandel::Bool=false,
-      orig::Function=F,
+      orig::String=F,
       start=nothing,
       orbit::Int=0,
       depth::Int=1,
       cmap::String="")
     typeof(∂) ≠ Array{Float64,1} && (∂ = [-float(∂),∂,-∂,∂])
-    return new(F,Q,C,∂,n,N,float(ϵ),m,e,iter,newt,mandel,orig,start,orbit,depth,cmap);
+    !newt ? (f = funk(F) |> eval; q = funk(Q) |> eval) :
+      (f = newton_raphson(eval(funk(F)),m); q = eval(funk("abs("*F*")")))
+    c = funK(C) |> eval; o = funk(orig) |> eval
+    return new(f,q,c,∂,n,N,float(ϵ),m,e,iter,newt,mandel,o,start,orbit,depth,cmap);
   end; end
 
 immutable FatouSet <: AbstractFatou
@@ -53,53 +59,55 @@ immutable FatouSet <: AbstractFatou
 
 fatou(K::FatouMeta) = FatouSet(K)
 
-function julia(F::Function;
+function julia(F::String;
+    Q::String= "abs2(z)",
+    C::String= "(angle(z)/(2π))*n^e",
     ∂=π/2,
     n::Integer=176,
     N::Integer=35,
-    iter::Bool=true,
-    Q::Function=(z,c)->abs2(z),
+    ϵ::Number=4,
     m::Number=0,
     e::Number=0,
-    C::Function=(z,n,e)->(angle(z)/(2π))*n^e,
+    iter::Bool=true,
     newt::Bool=false,
     start=nothing,
     orbit::Int=0,
     depth::Int=1,
     cmap::String="")
-  return FatouMeta(F,∂=∂,n=n,N=N,iter=iter,Q=Q,m=m,e=e,C=C,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
+  return FatouMeta(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
-function mandelbrot(F::Function;
+function mandelbrot(F::String;
+    Q::String= "abs2(z)",
+    C::String= "exp(-abs(z))",
     ∂=π/2,
     n::Integer=176,
     N::Integer=35,
-    iter::Bool=true,
-    Q::Function=(z,c)->abs2(z),
+    ϵ::Number=4,
     m::Number=0,
     e::Number=0,
-    C::Function=(z,n,e)->exp(-abs(z)),
+    iter::Bool=true,
     newt::Bool=false,
     start=nothing,
     orbit::Int=0,
     depth::Int=1,
     cmap::String="")
-  return FatouMeta(F,C=C,∂=∂,n=n,N=N,mandel=true,iter=iter,Q=Q,m=m,e=e,newt=newt,start=start,orbit=orbit,depth=depth,cmap=cmap); end
+  return FatouMeta(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=newt,mandel=true,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
-function newton(F::Function;
+function newton(F::String;
+    C::String= "(angle(z)/(2π))*n^e",
     ∂=π/2,
     n::Integer=176,
     N::Integer=35,
-    iter::Bool=true,
+    ϵ::Number=0.01,
     m::Number=1,
     e::Number=0,
-    C::Function=(z,n,e)->(angle(z)/(2π))*n^e,
+    iter::Bool=true,
     mandel::Bool=false,
-    ϵ::Number=0.1,
     start=nothing,
     orbit::Int=0,
     depth::Int=1,
     cmap::String="")
-  return FatouMeta(newton_raphson(F,m),∂=∂,n=n,N=N,iter=iter,Q=(z,c)->abs(F(z,c)),m=m,e=e,C=C,newt=true,mandel=mandel,ϵ=ϵ,orig=F,start=start,orbit=orbit,depth=depth,cmap=cmap); end
+  return FatouMeta(F,C=C,∂=∂,n=n,N=N,ϵ=ϵ,m=m,e=e,iter=iter,newt=true,mandel=mandel,orig=F,start=start,orbit=orbit,depth=depth,cmap=cmap); end
 
 # generate function code by constructing the lambda expression
 sym2fun(expr,typ) = Expr(:function, Expr(:call, gensym(), map(s->Expr(:(::),s,typ),sort!(Symbol.(free_symbols(expr))))..., Expr(:(...),:zargs)), SymPy.walk_expression(expr))
@@ -123,6 +131,7 @@ latexstring("D_0(\\epsilon) = \\left\\{ z\\in\\mathbb{C}: \\left|\\,z $setstr")
 # each subsequent iteration of the Newton method will yield a more complicated set
 nrset(f::Function,m,j) = latexstring(
   "$ds D_$j(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,$(nL(f,m,j)) $setstr")
+nrset(K::FatouMeta,j) = nrset(K.F,K.m,j)
 
 include("orbitplot.jl"); ds = "\\displaystyle"
 
