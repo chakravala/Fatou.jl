@@ -7,15 +7,15 @@ export orbit
     orbit(K::Fatou.Define)
     orbit(u::Function, ∂, orbit, depth, n)
 
-Plot funciton compositions of the primary `Fatou.Define` function up to any `depth` including cobweb plot with an `orbit` depth from the `start` point.
+Plot funciton compositions of the primary `Fatou.Define` function up to any `depth` including cobweb plot with an `orbit` depth from the `x0` start point.
 
 # Examples
 ```Julia
-julia> juliafill("z^2-0.67",∂=[-1.25,1.5],start=1.25,orbit=17,depth=3)|>orbit
+julia> juliafill("z^2-0.67",∂=[-1.25,1.5],x0=1.25,orbit=17,depth=3) |> orbit
 ```
 """
 function orbit(K::Define)
-  K.start == nothing ? (bi = K.∂[1:2]') : (bi = [K.∂[1:2]...,K.start]')
+  K.x0 == nothing ? (bi = K.∂[1:2]') : (bi = [K.∂[1:2]...,K.x0]')
     orbit(z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n)); end
 
 function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)

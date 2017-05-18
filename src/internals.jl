@@ -2,7 +2,7 @@
 #   Copyright (C) 2017 Michael Reed
 
 funk(r::String) = :((z,c)->$(parse(r))) # unleash the funK
-funK(r::String) = :((z,n,e)->$(parse(r))) # double funky
+funK(r::String) = :((z,n,p)->$(parse(r))) # double funky
 
 """
     sym2fun(expr,type)
