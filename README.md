@@ -2,9 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chakravala/Fatou.jl.svg?branch=master)](https://travis-ci.org/chakravala/Fatou.jl) [![Build status](https://ci.appveyor.com/api/projects/status/mdathjmu7jg57u77?svg=true)](https://ci.appveyor.com/project/chakravala/fatou-jl) [![Coverage Status](https://coveralls.io/repos/github/chakravala/Fatou.jl/badge.svg?branch=master)](https://coveralls.io/github/chakravala/Fatou.jl?branch=master) [![codecov.io](http://codecov.io/github/chakravala/Fatou.jl/coverage.svg?branch=master)](http://codecov.io/github/chakravala/Fatou.jl?branch=master)
 
-Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See [Wiki](https://github.com/chakravala/Fatou.jl/wiki) for detailed *examples*:
-
-This package provides: `fatou`, `juliafill`, `mandelbrot`, `newton`, `basin`, `plot`, and `orbit`; along with various internal functionality using `SymPy` and Julia expressions to help compute `Fatou.FilledSet` efficiently. Full documentation is included. The `fatou` function can be applied to a `Fatou.Define` object to produce a `Fatou.FilledSet`, which can then be passed as an argument to the `plot` function of `PyPlot`. Creation of `Fatou.Define` objects is done via passing a `parse`-able function expression string (in variables `z`, `c`) and optional keyword arguments to `juliafill`, `mandelbrot`, and `newton`.
+Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See [Explore Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) in Wiki for detailed *examples*. This package provides: `fatou`, `juliafill`, `mandelbrot`, `newton`, `basin`, `plot`, and `orbit`; along with various internal functionality using `SymPy` and Julia expressions to help compute `Fatou.FilledSet` efficiently. Full documentation is included. The `fatou` function can be applied to a `Fatou.Define` object to produce a `Fatou.FilledSet`, which can then be passed as an argument to the `plot` function of `PyPlot`. Creation of `Fatou.Define` objects is done via passing a `parse`-able function expression string (in variables `z`, `c`) and optional keyword arguments to `juliafill`, `mandelbrot`, and `newton`.
 
 ## Basic Usage
 
@@ -54,9 +52,7 @@ nf |> fatou |> plot
 basin(nf,3)
 ```
 
-![img/nf1-iter.png](img/newton.png)
-
-![D3(ϵ)](http://latex.codecogs.com/svg.latex?D_3(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{\left(z%20-%20\frac{\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{3}%20-%201}{3%20\left(z%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}\right)^{2}}%20-%20\frac{z^{3}%20-%201}{3%20z^{2}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+![img/newton.png](img/newton.png)
 
 Generalized Newton fractal example:
 
@@ -66,10 +62,10 @@ nf |> fatou |> plot
 basin(nf,2)
 ```
 
-![img/nf10-iter.png](img/generalized-newton.png)
+![img/generalized-newton.png](img/generalized-newton.png)
 
 ![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20-%20\frac{\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}%20-%201\right)}{\cos{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
 ## Detailed Explanation
 
-View [Wiki](https://github.com/chakravala/Fatou.jl/wiki) for more detailed *examples*.
+View [Explor Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) for detailed *examples*.
