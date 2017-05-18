@@ -1,8 +1,12 @@
 using Fatou
 using Base.Test
 
-@test orbitplot(x->x, [-1.7 2π -1.2],17,3,147) == nothing
-@test orbitplot(x->x, [-1.7 2π -1.2],0,1) == nothing
-@test (η = newton(z->z,1); ζ = 2.1; [η(ζ), [Fatou.recomp(η,ζ,k) for k ∈ 2:4]...]) |> typeof <: Array
-@test nrset(z->z^3-1,1,1) == nrset(x->x^3-1,1,1)
-@test (f=z -> z^3-1; m = 1; γ = π/2; nf = NewtonFractal(m,f,[-γ,γ,-γ,γ],200,ϵ=0.01)) |> typeof <: Array && PlotNF(nf,γ,f,m) == PlotNF(nf,γ,f,m)
+@test orbit(newton("z^3-1")) == nothing
+@test orbit(x->x, [-1.7 2π -1.2],17,3,147) == nothing
+@test orbit(x->x, [-1.7 2π -1.2],0,1) == nothing
+@test (η = Fatou.newton_raphson((z,c)->z,1); ζ = 2.1; [η(ζ,0), [Fatou.recomp(η,ζ,k) for k ∈ 2:4]...]) |> typeof <: Array
+@test basin(juliafill("z^3-1"),1) |> typeof == LaTeXStrings.LaTeXString
+@test basin(newton("z^3-1"),1) |> typeof == LaTeXStrings.LaTeXString
+@test (f=newton("z^3-1")|>fatou ; f|>typeof == Fatou.FilledSet && plot(f) |> typeof == PyPlot.PyObject)
+@test (f=mandelbrot("z^2+c")|>fatou ; f|>typeof == Fatou.FilledSet && plot(f) |> typeof == PyPlot.PyObject)
+@test (f=juliafill("z^2-0.06+0.67im")|>fatou ; f|>typeof == Fatou.FilledSet && plot(f) |> typeof == PyPlot.PyObject)
