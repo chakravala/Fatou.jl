@@ -68,4 +68,4 @@ basin(nf,2)
 
 ## Detailed Explanation
 
-View [Explor Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) for detailed *examples*.
+View [Explore Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) in Wiki for detailed *examples*.
