@@ -84,7 +84,10 @@ immutable FilledSet <: AbstractFatou
   meta::Define
   set::Matrix{Complex{Float64}}
   iter::Matrix{UInt8}
-  FilledSet(K::Define) = ((i,s)=Compute(K); new(K,s,i)); end
+  mix::Matrix{Float64}
+  function FilledSet(K::Define); (i,s)=Compute(K)
+    m(z::Complex{Float64},n::Number,p::Number) = K.C(z,n,p)::Float64
+    return new(K,s,i,m.(s,float.(i./K.N),K.p)); end; end
 
   """
       fatou(::Fatou.Define)
@@ -257,22 +260,23 @@ function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
   # generate coordinate grid
   Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
   x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[4],K.∂[3],Kyn)
-  # apply Newton-Orbit function element-wise to coordinate grid
+  Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
   (matU,matF) = (Array{UInt8,2}(Kyn,K.n),Array{Complex{Float64},2}(Kyn,K.n))
+  #mat = Array{Tuple{UInt8,Complex{Float64}},2}(Kyn,K.n)
   @time @threads for j = 1:length(y); for k = 1:length(x);
-      (matU[j,k],matF[j,k]) = nf(x[k] + im*y[j]); end; end; return (matU,matF); end # nf.(x' .+ im*y)
+      (matU[j,k],matF[j,k]) = nf(Z[j,k]); end; end; return (matU,matF); end
+      #mat[j,:] = nf.(Z[j,:]); end; return (matU.(mat),matF.(mat)); end
 
 import PyPlot: plot
 
 function plot(K::FilledSet;c::String="",bare::Bool=false)
   # plot figure using imshow based in input preferences
-  f(z::Complex{Float64},n::Number,p::Number) = K.meta.C(z,n,p)::Float64
-  set = (K.meta.iter ? K.iter : f.(K.set,float.(K.iter./K.meta.N),K.meta.p))
   figure(); isempty(c) && (c = K.meta.cmap)
-  isempty(c) ? imshow(set,extent=K.meta.∂) : imshow(set,cmap=c,extent=K.meta.∂)
+  isempty(c) ? imshow(K.meta.iter ? K.iter : K.mix, extent=K.meta.∂) :
+    imshow(K.meta.iter ? K.iter : K.mix, cmap=c, extent=K.meta.∂)
   tight_layout(); if !bare
     # determine if plot is Iteration, Roots, or Limit
-    typeof(set) == Matrix{UInt8} ? t = L"iter. " :
+    typeof(K.meta.iter ? K.iter : K.mix) == Matrix{UInt8} ? t = L"iter. " :
       K.meta.m==1 ? t = L"roots" : t = L"limit"
     # annotate title using LaTeX
     ttext = "f:z\\mapsto $(SymPy.latex(K.meta.O(Sym(:z),Sym(:c)))),\\,"
@@ -281,5 +285,7 @@ function plot(K::FilledSet;c::String="",bare::Bool=false)
       ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
     else; title(latexstring("$ttext")*t)
     end; tight_layout(); colorbar(); end; end
+
+println("Fatou detected $(Threads.nthreads()) julia threads.")
 
 end # module
