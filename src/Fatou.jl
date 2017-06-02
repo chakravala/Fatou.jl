@@ -1,5 +1,5 @@
 module Fatou
-using SymPy,PyPlot
+using SymPy,PyPlot,Base.Threads
 
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
@@ -258,7 +258,9 @@ function Compute(K::Define)::Union{Matrix{UInt8},Matrix{Float64}}
   Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
   x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[4],K.∂[3],Kyn)
   # apply Newton-Orbit function element-wise to coordinate grid
-  return @time nf.(x' .+ im*y); end
+  mat = (K.iter ? Array{UInt8,2}(Kyn,K.n) : Array{Float64,2}(Kyn,K.n))
+  @time @threads for j = 1:length(y); for k = 1:length(x);
+      mat[j,k] = nf(x[k] + im*y[j]); end; end; return mat; end # nf.(x' .+ im*y)
 
 import PyPlot: plot
 
