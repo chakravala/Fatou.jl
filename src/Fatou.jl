@@ -1,5 +1,5 @@
 module Fatou
-using SymPy,PyPlot,Base.Threads
+using Colors,SymPy,PyPlot,Base.Threads
 
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
@@ -13,7 +13,7 @@ abstract AbstractFatou
       Q::String   = "abs2(z)",            # escape criterion, (z, c) -> Q
       C::String   = "angle(z)/(2π))*n^p", # coloring, (z, n=iter., p=exp.) -> C
       ∂    = π/2, # Array{Float64,1}      # Bounds, [x(a),x(b),y(a),y(b)]
-      n::Integer  = 176,                  # vertical grid points
+      n::Integer  = 176,                  # horizontal grid points
       N::Integer  = 35,                   # max. iterations
       ϵ::Number   = 4,                    # basin ϵ-Limit criterion
       iter::Bool  = false,                # toggle iteration mode
@@ -82,8 +82,9 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
 immutable FilledSet <: AbstractFatou
   meta::Define
-  set::Union{Matrix{UInt8},Matrix{Float64}}
-  FilledSet(K::Define) = new(K,Compute(K)); end
+  set::Matrix{Complex{Float64}}
+  iter::Matrix{UInt8}
+  FilledSet(K::Define) = ((i,s)=Compute(K); new(K,s,i)); end
 
   """
       fatou(::Fatou.Define)
@@ -102,7 +103,7 @@ fatou(K::Define) = FilledSet(K)
       Q::String   = "abs2(z)",            # escape criterion, (z, c) -> Q
       C::String   = "angle(z)/(2π))*n^p", # coloring, (z, n=iter., p=exp.) -> C
       ∂    = π/2, # Array{Float64,1}      # Bounds, [x(a),x(b),y(a),y(b)]
-      n::Integer  = 176,                  # vertical grid points
+      n::Integer  = 176,                  # horizontal grid points
       N::Integer  = 35,                   # max. iterations
       ϵ::Number   = 4,                    # basin ϵ-Limit criterion
       iter::Bool  = false,                # toggle iteration mode
@@ -141,7 +142,7 @@ function juliafill(F::String;
       Q::String   = "abs2(z)",            # escape criterion, (z, c) -> Q
       C::String   = "exp(-abs(z))*n^p",   # coloring, (z, n=iter., p=exp.) -> C
       ∂    = π/2, # Array{Float64,1}      # Bounds, [x(a),x(b),y(a),y(b)]
-      n::Integer  = 176,                  # vertical grid points
+      n::Integer  = 176,                  # horizontal grid points
       N::Integer  = 35,                   # max. iterations
       ϵ::Number   = 4,                    # basin ϵ-Limit criterion
       iter::Bool  = false,                # toggle iteration mode
@@ -183,7 +184,7 @@ function mandelbrot(F::String;
     newton(::String;                      # primary map, (z, c) -> F
       C::String   = "angle(z)/(2π))*n^p", # coloring, (z, n=iter., p=exp.) -> C
       ∂    = π/2, # Array{Float64,1}      # Bounds, [x(a),x(b),y(a),y(b)]
-      n::Integer  = 176,                  # vertical grid points
+      n::Integer  = 176,                  # horizontal grid points
       N::Integer  = 35,                   # max. iterations
       ϵ::Number   = 4,                    # basin ϵ-Limit criterion
       iter::Bool  = false,                # toggle iteration mode
@@ -242,35 +243,36 @@ basin(K::Define,j) = K.newt ? nrset(K.O,K.m,j) : jset(K.F,j)
 
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
-function Compute(K::Define)::Union{Matrix{UInt8},Matrix{Float64}}
+function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
   # define Complex{Float64} versions of polynomial and constant for speed
   f = (sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
   h = (sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
-  c(z::Complex{Float64},n::Number,p::Number) = K.C(z,n,p)::Float64
   # define function for computing orbit of a z0 input
-  function nf(z0::Complex{Float64})::Union{UInt8,Float64}
+  function nf(z0::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
     K.mandel ? (z = K.seed): (z = z0); zn = 0x00
     while (K.newt ? (h(z,z0)::Float64>K.ϵ)::Bool : (h(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
       z = f(z,z0)::Complex{Float64}; zn+=0x01; end; #end
     # return the normalized argument of z or iteration count
-    return (K.iter ? zn::UInt8:c(z,float(zn/K.N),K.p)::Float64)::Union{UInt8,Float64}; end
+    return (zn::UInt8,z::Complex{Float64})::Tuple{UInt8,Complex{Float64}}; end
   # generate coordinate grid
   Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
   x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[4],K.∂[3],Kyn)
   # apply Newton-Orbit function element-wise to coordinate grid
-  mat = (K.iter ? Array{UInt8,2}(Kyn,K.n) : Array{Float64,2}(Kyn,K.n))
+  (matU,matF) = (Array{UInt8,2}(Kyn,K.n),Array{Complex{Float64},2}(Kyn,K.n))
   @time @threads for j = 1:length(y); for k = 1:length(x);
-      mat[j,k] = nf(x[k] + im*y[j]); end; end; return mat; end # nf.(x' .+ im*y)
+      (matU[j,k],matF[j,k]) = nf(x[k] + im*y[j]); end; end; return (matU,matF); end # nf.(x' .+ im*y)
 
 import PyPlot: plot
 
 function plot(K::FilledSet;c::String="",bare::Bool=false)
   # plot figure using imshow based in input preferences
+  f(z::Complex{Float64},n::Number,p::Number) = K.meta.C(z,n,p)::Float64
+  set = (K.meta.iter ? K.iter : f.(K.set,float.(K.iter./K.meta.N),K.meta.p))
   figure(); isempty(c) && (c = K.meta.cmap)
-  isempty(c) ? imshow(K.set,extent=K.meta.∂) : imshow(K.set,cmap=c,extent=K.meta.∂)
+  isempty(c) ? imshow(set,extent=K.meta.∂) : imshow(set,cmap=c,extent=K.meta.∂)
   tight_layout(); if !bare
     # determine if plot is Iteration, Roots, or Limit
-    typeof(K.set) == Matrix{UInt8} ? t = L"iter. " :
+    typeof(set) == Matrix{UInt8} ? t = L"iter. " :
       K.meta.m==1 ? t = L"roots" : t = L"limit"
     # annotate title using LaTeX
     ttext = "f:z\\mapsto $(SymPy.latex(K.meta.O(Sym(:z),Sym(:c)))),\\,"
