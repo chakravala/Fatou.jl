@@ -4,6 +4,9 @@
 funk(r::String) = :((z,c)->$(parse(r))) # unleash the funK
 funK(r::String) = :((z,n,p)->$(parse(r))) # double funky
 
+#matU(mat::Tuple{UInt8,Complex{Float64}})::UInt8 = mat[1]
+#matF(mat::Tuple{UInt8,Complex{Float64}})::Complex{Float64} = mat[2]
+
 """
     sym2fun(expr,type)
 
