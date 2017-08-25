@@ -86,7 +86,11 @@ immutable FilledSet <: AbstractFatou
   iter::Matrix{UInt8}
   mix::Matrix{Float64}
   function FilledSet(K::Define); (i,s)=Compute(K)
-    m(z::Complex{Float64},n::Number,p::Number) = invokelatest(K.C,z,n,p)::Float64
+    if VERSION < v"0.6.0" # backwards compatability
+      m(z::Complex{Float64},n::Number,p::Number) = K.C(z,n,p)::Float64
+    else
+      m(z::Complex{Float64},n::Number,p::Number) = invokelatest(K.C,z,n,p)::Float64
+    end
     return new(K,s,i,broadcast(m,s,broadcast(float,i./K.N),K.p)); end; end
 
   """
@@ -248,8 +252,13 @@ basin(K::Define,j) = K.newt ? nrset(K.O,K.m,j) : jset(K.F,j)
 """
 function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
   # define Complex{Float64} versions of polynomial and constant for speed
-  f = (sym2fun(invokelatest(K.F,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
-  h = (sym2fun(invokelatest(K.Q,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+  if VERSION < v"0.6.0" # backwards compatability
+    f = (sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+    h = (sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+  else
+    f = (sym2fun(invokelatest(K.F,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+    h = (sym2fun(invokelatest(K.Q,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+  end
   # define function for computing orbit of a z0 input
   function nf(z0::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
     K.mandel ? (z = K.seed): (z = z0); zn = 0x00
@@ -263,9 +272,14 @@ function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
   Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
   (matU,matF) = (Array{UInt8,2}(Kyn,K.n),Array{Complex{Float64},2}(Kyn,K.n))
   #mat = Array{Tuple{UInt8,Complex{Float64}},2}(Kyn,K.n)
-  @time @threads for j = 1:length(y); for k = 1:length(x);
-      (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k]); end; end; return (matU,matF); end
-      #mat[j,:] = nf.(Z[j,:]); end; return (matU.(mat),matF.(mat)); end
+  if VERSION < v"0.6.0" # backwards compatability
+    @time @threads for j = 1:length(y); for k = 1:length(x);
+        (matU[j,k],matF[j,k]) = nf(Z[j,k]); end; end
+  else
+    @time @threads for j = 1:length(y); for k = 1:length(x);
+        (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k]); end; end
+  end
+  return (matU,matF); end #mat[j,:] = nf.(Z[j,:]); end; return (matU.(mat),matF.(mat)); end
 
 import PyPlot: plot
 
@@ -279,7 +293,11 @@ function plot(K::FilledSet;c::String="",bare::Bool=false)
     typeof(K.meta.iter ? K.iter : K.mix) == Matrix{UInt8} ? t = L"iter. " :
       K.meta.m==1 ? t = L"roots" : t = L"limit"
     # annotate title using LaTeX
-    ttext = "f:z\\mapsto $(SymPy.latex(invokelatest(K.meta.O,Sym(:z),Sym(:c)))),\\,"
+    if VERSION < v"0.6.0" # backwards compatability
+      ttext = "f:z\\mapsto $(SymPy.latex(K.meta.O(Sym(:z),Sym(:c)))),\\,"
+    else
+      ttext = "f:z\\mapsto $(SymPy.latex(invokelatest(K.meta.O,Sym(:z),Sym(:c)))),\\,"
+    end
     if K.meta.newt; title(latexstring("$ttext m = $(K.meta.m), ")*t)
       # annotate y-axis with Newton's method
       ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
