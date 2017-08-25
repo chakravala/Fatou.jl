@@ -19,7 +19,12 @@ function orbit(K::Define)
     orbit(z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n)); end
 
 function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
-  f = sym2fun(u(Sym(:x)),:Float64) |> eval
+  if VERSION < v"0.6.0" # backwards compatability
+    f = sym2fun(u(Sym(:x)),:Float64) |> eval
+  else
+    ff = sym2fun(invokelatest(u,Sym(:x)),:Float64) |> eval
+    f(x::Float64) = invokelatest(ff,x)
+  end
   # prepare for next figure
   figure()
   # initalize array to depth
@@ -30,7 +35,7 @@ function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int
   # loop over all discrete x-axis points in set
   # loop function composition at x val
   for t ∈ 1:depth
-    N[:,t+1] = f.(N[:,t])
+    N[:,t+1] = broadcast(f,N[:,t])
   end
   # plot background lines
   plot(x[:],N[:,1],"k--",x[:],N[:,2])
@@ -67,7 +72,7 @@ function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int
   d=1.07; xlim(bi[1],bi[2])
   ylim(minimum([d*minimum(N[:,2]),0]),maximum([d*maximum(N[:,2]),0]))
   # set title
-  fune = SymPy.latex(u(Sym("x")));
+  fune = (VERSION < v"0.6.0") ? SymPy.latex(u(Sym("x"))) : SymPy.latex(invokelatest(u,Sym("x")))
   title(latexstring("\$ x \\mapsto $fune\$$funt"))
   # set legend
   legend(vcat([L"$y=x$",L"$\phi(x)$",L"(x_n,\phi(x_n))"],[latexstring("\\phi^{$x}(x)") for x ∈ 2:depth],funs))
