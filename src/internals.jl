@@ -27,22 +27,17 @@ sym2fun(expr,typ) = Expr(:function, Expr(:call, gensym(),
   SymPy.walk_expression(expr))
 
 # we can substitute the expression into Newton's method and display it with LaTeX
-if VERSION < v"0.6.0" # backwards compatability
-  function newton_raphson(f::Function,m)
-    sym2fun(Sym(:z)-m*f(Sym(:z),Sym(:c))/diff(f(Sym(:z),Sym(:c))),:Any) |> eval; end
-else
-  function newton_raphson(f::Function,m)
+function newton_raphson(f::Function,m)
+  return (VERSION < v"0.6.0") ?
+    sym2fun(Sym(:z)-m*f(Sym(:z),Sym(:c))/diff(f(Sym(:z),Sym(:c))),:Any) |> eval :
     sym2fun(Sym(:z)-m*invokelatest(f,Sym(:z),Sym(:c))/diff(invokelatest(f,Sym(:z),Sym(:c))),:Any) |> eval; end
-end
 
 # define recursive composition on functions
-if VERSION < v"0.6.0" # backwards compatability
-  function recomp(f::Function,x::Number,j::Int)
-    return j > 1 ? f(recomp(f,x,j-1),0) : f(x,0); end
-else
-  function recomp(f::Function,x::Number,j::Int)
-    return j > 1 ? invokelatest(f,recomp(f,x,j-1),0) : invokelatest(f,x,0); end
-end
+function recomp(f::Function,x::Number,j::Int)
+  if VERSION < v"0.6.0" # backwards compatability
+    return j > 1 ? f(recomp(f,x,j-1),0) : f(x,0)
+  else
+    return j > 1 ? invokelatest(f,recomp(f,x,j-1),0) : invokelatest(f,x,0); end; end
 # we can convert the j-th function composition into a latex expresion
 nL(f::Function,m,j) = recomp(newton_raphson(f,m),Sym(:z),j) |> SymPy.latex
 jL(f::Function,j) = recomp(f,Sym(:z),j) |> SymPy.latex

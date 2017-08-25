@@ -72,11 +72,7 @@ function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int
   d=1.07; xlim(bi[1],bi[2])
   ylim(minimum([d*minimum(N[:,2]),0]),maximum([d*maximum(N[:,2]),0]))
   # set title
-  if VERSION < v"0.6.0" # backwards compatability
-    fune = SymPy.latex(u(Sym("x")))
-  else
-    fune = SymPy.latex(invokelatest(u,Sym("x")))
-  end
+  fune = (VERSION < v"0.6.0") ? SymPy.latex(u(Sym("x"))) : SymPy.latex(invokelatest(u,Sym("x")))
   title(latexstring("\$ x \\mapsto $fune\$$funt"))
   # set legend
   legend(vcat([L"$y=x$",L"$\phi(x)$",L"(x_n,\phi(x_n))"],[latexstring("\\phi^{$x}(x)") for x ∈ 2:depth],funs))
