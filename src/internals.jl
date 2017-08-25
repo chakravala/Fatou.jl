@@ -3,8 +3,6 @@
 
 import Base: invokelatest
 
-tfun = nothing; tm = nothing
-
 funk(r::String) = :((z,c)->$(parse(r))) # unleash the funK
 funK(r::String) = :((z,n,p)->$(parse(r))) # double funky
 
