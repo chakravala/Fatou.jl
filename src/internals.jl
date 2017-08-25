@@ -1,6 +1,10 @@
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
 
+import Base: invokelatest
+
+tfun = nothing; tm = nothing
+
 funk(r::String) = :((z,c)->$(parse(r))) # unleash the funK
 funK(r::String) = :((z,n,p)->$(parse(r))) # double funky
 
@@ -24,14 +28,13 @@ sym2fun(expr,typ) = Expr(:function, Expr(:call, gensym(),
     map(s->Expr(:(::),s,typ),sort!(Symbol.(free_symbols(expr))))..., Expr(:(...),:zargs)),
   SymPy.walk_expression(expr))
 
-# evaluate the differentiated expression and assign to a handle
-p1(f::Function) = sym2fun(diff(f(Sym(:a),Sym(:b))),:Any) |> eval
-
 # we can substitute the expression into Newton's method and display it with LaTeX
-newton_raphson(f::Function,m) = (z,c) -> z - m*f(z,c)/p1(f)(z,c)
+function newton_raphson(f::Function,m)
+  sym2fun(Sym(:z)-m*invokelatest(f,Sym(:z),Sym(:c))/diff(invokelatest(f,Sym(:z),Sym(:c))),:Any) |> eval; end
 
 # define recursive composition on functions
-recomp(f::Function,x::Number,j::Int) = j > 1 ? f(recomp(f,x,j-1),0) : f(x,0)
+function recomp(f::Function,x::Number,j::Int)
+  return j > 1 ? invokelatest(f,recomp(f,x,j-1),0) : invokelatest(f,x,0); end
 
 # we can convert the j-th function composition into a latex expresion
 nL(f::Function,m,j) = recomp(newton_raphson(f,m),Sym(:z),j) |> SymPy.latex
