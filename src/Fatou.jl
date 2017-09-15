@@ -31,49 +31,50 @@ abstract AbstractFatou
 `Define` the metadata for a `Fatou.FilledSet`.
 """
 type Define <: AbstractFatou
-  F::Function # primary map
-  Q::Function # escape criterion
-  C::Function # complex fixed point coloring
-  ∂::Array{Float64,1} # bounds
-  n::UInt16 # number of grid points
-  N::UInt8 # number of iterations
-  ϵ::Float64 # epsilon Limit criterion
-  iter::Bool # toggle iteration mode
-  p::Float64 # iteration color exponent
-  newt::Bool # toggle Newton mode
-  m::Number # newton multiplicity factor
-  O::Function # original Newton map
-  mandel::Bool # toggle Mandelbrot mode
-  seed::Number # Mandelbrot seed value
-  x0 # orbit starting point
-  orbit::Int # orbit cobweb depth
-  depth::Int # depth of function composition
-  cmap::String # imshow color map
-  function Define(F::String;
-      Q::String="abs2(z)",
-      C::String="angle(z)/(2π))*n^p",
-      ∂=π/2,
-      n::Integer=176,
-      N::Integer=35,
-      ϵ::Number=4,
-      iter::Bool=false,
-      p::Number=0,
-      newt::Bool=false,
-      m::Number=0,
-      O::String=F,
-      mandel::Bool=false,
-      seed::Number=0.0+0.0im,
-      x0=nothing,
-      orbit::Int=0,
-      depth::Int=1,
-      cmap::String="")
-    !(typeof(∂) <: Array) && (∂ = [-float(∂),∂,-∂,∂])
-    length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
-    !newt ? (f = funk(F) |> eval; q = funk(Q) |> eval) :
-      (f = newton_raphson(eval(funk(F)),m); q = eval(funk("abs("*F*")")))
-    c = funK(C) |> eval; o = funk(O) |> eval
-    return new(f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,o,mandel,seed,x0,orbit,depth,cmap);
-  end; end
+    F::Function # primary map
+    Q::Function # escape criterion
+    C::Function # complex fixed point coloring
+    ∂::Array{Float64,1} # bounds
+    n::UInt16 # number of grid points
+    N::UInt8 # number of iterations
+    ϵ::Float64 # epsilon Limit criterion
+    iter::Bool # toggle iteration mode
+    p::Float64 # iteration color exponent
+    newt::Bool # toggle Newton mode
+    m::Number # newton multiplicity factor
+    O::Function # original Newton map
+    mandel::Bool # toggle Mandelbrot mode
+    seed::Number # Mandelbrot seed value
+    x0 # orbit starting point
+    orbit::Int # orbit cobweb depth
+    depth::Int # depth of function composition
+    cmap::String # imshow color map
+    function Define(F::String;
+            Q::String="abs2(z)",
+            C::String="angle(z)/(2π))*n^p",
+            ∂=π/2,
+            n::Integer=176,
+            N::Integer=35,
+            ϵ::Number=4,
+            iter::Bool=false,
+            p::Number=0,
+            newt::Bool=false,
+            m::Number=0,
+            O::String=F,
+            mandel::Bool=false,
+            seed::Number=0.0+0.0im,
+            x0=nothing,
+            orbit::Int=0,
+            depth::Int=1,
+            cmap::String="")
+        !(typeof(∂) <: Array) && (∂ = [-float(∂),∂,-∂,∂])
+        length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
+        !newt ? (f = funk(F) |> eval; q = funk(Q) |> eval) :
+            (f = newton_raphson(eval(funk(F)),m); q = eval(funk("abs("*F*")")))
+        c = funK(C) |> eval; o = funk(O) |> eval
+        return new(f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,o,mandel,seed,x0,orbit,depth,cmap)
+    end
+end
 
 """
     Fatou.FilledSet(::Fatou.Define)
@@ -81,14 +82,16 @@ type Define <: AbstractFatou
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
 immutable FilledSet <: AbstractFatou
-  meta::Define
-  set::Matrix{Complex{Float64}}
-  iter::Matrix{UInt8}
-  mix::Matrix{Float64}
-  function FilledSet(K::Define); (i,s)=Compute(K)
-    m(z::Complex{Float64},n::Number,p::Number) = (VERSION < v"0.6.0") ?
-      K.C(z,n,p)::Float64 : invokelatest(K.C,z,n,p)::Float64
-    return new(K,s,i,broadcast(m,s,broadcast(float,i./K.N),K.p)); end; end
+    meta::Define
+    set::Matrix{Complex{Float64}}
+    iter::Matrix{UInt8}
+    mix::Matrix{Float64}
+    function FilledSet(K::Define); (i,s)=Compute(K)
+        m(z::Complex{Float64},n::Number,p::Number) = (VERSION < v"0.6.0") ?
+            K.C(z,n,p)::Float64 : invokelatest(K.C,z,n,p)::Float64
+        return new(K,s,i,broadcast(m,s,broadcast(float,i./K.N),K.p))
+    end
+end
 
   """
       fatou(::Fatou.Define)
@@ -125,21 +128,22 @@ julia> juliafill("z^2-0.06+0.67im",∂=[-1.5,1.5,-1,1],N=80,n=1501,cmap="RdGy")
 ```
 """
 function juliafill(F::String;
-    Q::String= "abs2(z)",
-    C::String= "(angle(z)/(2π))*n^p",
-    ∂=π/2,
-    n::Integer=176,
-    N::Integer=35,
-    ϵ::Number=4,
-    iter::Bool=false,
-    p::Number=0,
-    newt::Bool=false,
-    m::Number=0,
-    x0=nothing,
-    orbit::Int=0,
-    depth::Int=1,
-    cmap::String="")
-  return Define(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,x0=x0,orbit=orbit,depth=depth,cmap=cmap); end
+        Q::String= "abs2(z)",
+        C::String= "(angle(z)/(2π))*n^p",
+        ∂=π/2,
+        n::Integer=176,
+        N::Integer=35,
+        ϵ::Number=4,
+        iter::Bool=false,
+        p::Number=0,
+        newt::Bool=false,
+        m::Number=0,
+        x0=nothing,
+        orbit::Int=0,
+        depth::Int=1,
+        cmap::String="")
+    return Define(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,x0=x0,orbit=orbit,depth=depth,cmap=cmap)
+end
 
 """
     mandelbrot(::String;                  # primary map, (z, c) -> F
@@ -166,23 +170,24 @@ mandelbrot("z^2+c",n=800,N=20,∂=[-1.91,0.51,-1.21,1.21],cmap="nipy_spectral")
 ```
 """
 function mandelbrot(F::String;
-    Q::String= "abs2(z)",
-    ∂=π/2,
-    C::String= "exp(-abs(z))*n^p",
-    n::Integer=176,
-    N::Integer=35,
-    ϵ::Number=4,
-    iter::Bool=false,
-    p::Number=0,
-    newt::Bool=false,
-    m::Number=0,
-    seed::Number=0.0+0.0im,
-    x0=nothing,
-    orbit::Int=0,
-    depth::Int=1,
-    cmap::String="")
-  m ≠ 0 && (newt = true)
-  return Define(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,mandel=true,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap); end
+        Q::String= "abs2(z)",
+        ∂=π/2,
+        C::String= "exp(-abs(z))*n^p",
+        n::Integer=176,
+        N::Integer=35,
+        ϵ::Number=4,
+        iter::Bool=false,
+        p::Number=0,
+        newt::Bool=false,
+        m::Number=0,
+        seed::Number=0.0+0.0im,
+        x0=nothing,
+        orbit::Int=0,
+        depth::Int=1,
+        cmap::String="")
+    m ≠ 0 && (newt = true)
+    return Define(F,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,mandel=true,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap)
+end
 
 """
     newton(::String;                      # primary map, (z, c) -> F
@@ -209,21 +214,22 @@ julia> newton("z^3-1",n=800,cmap="brg")
 ```
 """
 function newton(F::String;
-    C::String= "(angle(z)/(2π))*n^p",
-    ∂=π/2,
-    n::Integer=176,
-    N::Integer=35,
-    ϵ::Number=0.01,
-    iter::Bool=false,
-    p::Number=0,
-    m::Number=1,
-    mandel::Bool=false,
-    seed::Number=0.0+0.0im,
-    x0=nothing,
-    orbit::Int=0,
-    depth::Int=1,
-    cmap::String="")
-  return Define(F,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=true,m=m,O=F,mandel=mandel,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap); end
+        C::String= "(angle(z)/(2π))*n^p",
+        ∂=π/2,
+        n::Integer=176,
+        N::Integer=35,
+        ϵ::Number=0.01,
+        iter::Bool=false,
+        p::Number=0,
+        m::Number=1,
+        mandel::Bool=false,
+        seed::Number=0.0+0.0im,
+        x0=nothing,
+        orbit::Int=0,
+        depth::Int=1,
+        cmap::String="")
+    return Define(F,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=true,m=m,O=F,mandel=mandel,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap)
+end
 
 # load additional functionality
 include("internals.jl"); include("orbitplot.jl")
@@ -248,52 +254,64 @@ basin(K::Define,j) = K.newt ? nrset(K.O,K.m,j) : jset(K.F,j)
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
 function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
-  # define Complex{Float64} versions of polynomial and constant for speed
-  f=(VERSION < v"0.6.0")?(sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
-    (sym2fun(invokelatest(K.F,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
-  h=(VERSION < v"0.6.0")?(sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
-    (sym2fun(invokelatest(K.Q,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
-  # define function for computing orbit of a z0 input
-  function nf(z0::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
-    K.mandel ? (z = K.seed): (z = z0); zn = 0x00
-    while (K.newt ? (h(z,z0)::Float64>K.ϵ)::Bool : (h(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
-      z = f(z,z0)::Complex{Float64}; zn+=0x01; end; #end
-    # return the normalized argument of z or iteration count
-    return (zn::UInt8,z::Complex{Float64})::Tuple{UInt8,Complex{Float64}}; end
-  # generate coordinate grid
-  Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
-  x = linspace(K.∂[1]+0.0001,K.∂[2],K.n); y = linspace(K.∂[4],K.∂[3],Kyn)
-  Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
-  (matU,matF) = (Array{UInt8,2}(Kyn,K.n),Array{Complex{Float64},2}(Kyn,K.n))
-  #mat = Array{Tuple{UInt8,Complex{Float64}},2}(Kyn,K.n)
-  if VERSION < v"0.6.0" # backwards compatability
-    @time @threads for j = 1:length(y); for k = 1:length(x);
-        (matU[j,k],matF[j,k]) = nf(Z[j,k]); end; end
-  else
-    @time @threads for j = 1:length(y); for k = 1:length(x);
-        (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k]); end; end
-  end
-  return (matU,matF); end #mat[j,:] = nf.(Z[j,:]); end; return (matU.(mat),matF.(mat)); end
+    # define Complex{Float64} versions of polynomial and constant for speed
+    f=(VERSION < v"0.6.0")?(sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
+        (sym2fun(invokelatest(K.F,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+    h=(VERSION < v"0.6.0")?(sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
+        (sym2fun(invokelatest(K.Q,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
+    # define function for computing orbit of a z0 input
+    function nf(z0::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
+        K.mandel ? (z = K.seed): (z = z0); zn = 0x00
+        while (K.newt ? (h(z,z0)::Float64>K.ϵ)::Bool : (h(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
+            z = f(z,z0)::Complex{Float64}; zn+=0x01
+        end; #end
+        # return the normalized argument of z or iteration count
+        return (zn::UInt8,z::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
+    end
+    # generate coordinate grid
+    Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
+    x = linspace(K.∂[1]+0.0001,K.∂[2],K.n)
+    y = linspace(K.∂[4],K.∂[3],Kyn)
+    Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
+    (matU,matF) = (Array{UInt8,2}(Kyn,K.n),Array{Complex{Float64},2}(Kyn,K.n))
+    #mat = Array{Tuple{UInt8,Complex{Float64}},2}(Kyn,K.n)
+    if VERSION < v"0.6.0" # backwards compatability
+        @time @threads for j = 1:length(y); for k = 1:length(x);
+            (matU[j,k],matF[j,k]) = nf(Z[j,k]); end; end
+    else
+        @time @threads for j = 1:length(y); for k = 1:length(x);
+            (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k]); end; end
+    end
+    return (matU,matF)
+end #mat[j,:] = nf.(Z[j,:]); end; return (matU.(mat),matF.(mat)); end
 
 import PyPlot: plot
 
 function plot(K::FilledSet;c::String="",bare::Bool=false)
-  # plot figure using imshow based in input preferences
-  figure(); isempty(c) && (c = K.meta.cmap)
-  isempty(c) ? imshow(K.meta.iter ? K.iter : K.mix, extent=K.meta.∂) :
-    imshow(K.meta.iter ? K.iter : K.mix, cmap=c, extent=K.meta.∂)
-  tight_layout(); if !bare
-    # determine if plot is Iteration, Roots, or Limit
-    typeof(K.meta.iter ? K.iter : K.mix) == Matrix{UInt8} ? t = L"iter. " :
-      K.meta.m==1 ? t = L"roots" : t = L"limit"
-    # annotate title using LaTeX
-      ttext = (VERSION < v"0.6.0")?"f:z\\mapsto $(SymPy.latex(K.meta.O(Sym(:z),Sym(:c)))),\\," :
-        "f:z\\mapsto $(SymPy.latex(invokelatest(K.meta.O,Sym(:z),Sym(:c)))),\\,"
-    if K.meta.newt; title(latexstring("$ttext m = $(K.meta.m), ")*t)
-      # annotate y-axis with Newton's method
-      ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
-    else; title(latexstring("$ttext")*t)
-    end; tight_layout(); colorbar(); end; end
+    # plot figure using imshow based in input preferences
+    figure()
+    isempty(c) && (c = K.meta.cmap)
+    isempty(c) ? imshow(K.meta.iter ? K.iter : K.mix, extent=K.meta.∂) :
+        imshow(K.meta.iter ? K.iter : K.mix, cmap=c, extent=K.meta.∂)
+    tight_layout()
+    if !bare
+        # determine if plot is Iteration, Roots, or Limit
+        typeof(K.meta.iter ? K.iter : K.mix) == Matrix{UInt8} ? t = L"iter. " :
+            K.meta.m==1 ? t = L"roots" : t = L"limit"
+        # annotate title using LaTeX
+        ttext = (VERSION < v"0.6.0")?"f:z\\mapsto $(SymPy.latex(K.meta.O(Sym(:z),Sym(:c)))),\\," :
+            "f:z\\mapsto $(SymPy.latex(invokelatest(K.meta.O,Sym(:z),Sym(:c)))),\\,"
+        if K.meta.newt
+            title(latexstring("$ttext m = $(K.meta.m), ")*t)
+            # annotate y-axis with Newton's method
+            ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
+        else
+            title(latexstring("$ttext")*t)
+        end
+        tight_layout()
+        colorbar()
+    end
+end
 
 println("Fatou detected $(Threads.nthreads()) julia threads.")
 
