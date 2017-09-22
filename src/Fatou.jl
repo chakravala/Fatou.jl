@@ -255,18 +255,22 @@ basin(K::Define,j) = K.newt ? nrset(K.O,K.m,j) : jset(K.F,j)
 """
 function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
     # define Complex{Float64} versions of polynomial and constant for speed
-    f=(VERSION < v"0.6.0")?(sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
+    f = (VERSION < v"0.6.0") ?
+        (sym2fun(K.F(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
         (sym2fun(invokelatest(K.F,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
-    h=(VERSION < v"0.6.0")?(sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
+    h = (VERSION < v"0.6.0") ?
+        (sym2fun(K.Q(Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function :
         (sym2fun(invokelatest(K.Q,Sym(:a),Sym(:b)),:(Complex{Float64})) |> eval)::Function
     # define function for computing orbit of a z0 input
-    function nf(z0::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
-        K.mandel ? (z = K.seed): (z = z0); zn = 0x00
+    function nf(z0::Complex{Float64})
+        K.mandel ? (z = K.seed): (z = z0)
+        zn = 0x00
         while (K.newt ? (h(z,z0)::Float64>K.ϵ)::Bool : (h(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
-            z = f(z,z0)::Complex{Float64}; zn+=0x01
+            z = f(z,z0)::Complex{Float64}
+            zn+=0x01
         end; #end
         # return the normalized argument of z or iteration count
-        return (zn::UInt8,z::Complex{Float64})::Tuple{UInt8,Complex{Float64}}
+        return (zn::UInt8,z::Complex{Float64})
     end
     # generate coordinate grid
     Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
@@ -277,10 +281,12 @@ function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
     #mat = Array{Tuple{UInt8,Complex{Float64}},2}(Kyn,K.n)
     if VERSION < v"0.6.0" # backwards compatability
         @time @threads for j = 1:length(y); for k = 1:length(x);
-            (matU[j,k],matF[j,k]) = nf(Z[j,k]); end; end
+            (matU[j,k],matF[j,k]) = nf(Z[j,k])::Tuple{UInt8,Complex{Float64}}
+        end; end
     else
         @time @threads for j = 1:length(y); for k = 1:length(x);
-            (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k]); end; end
+            (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k])::Tuple{UInt8,Complex{Float64}}
+        end; end
     end
     return (matU,matF)
 end #mat[j,:] = nf.(Z[j,:]); end; return (matU.(mat),matF.(mat)); end
