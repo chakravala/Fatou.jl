@@ -1,7 +1,9 @@
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
 
-import Base: invokelatest
+if !(VERSION < v"0.6.0")
+    import Base: invokelatest
+end
 
 funk(r::String) = :((z,c)->$(parse(r))) # unleash the funK
 funK(r::String) = :((z,n,p)->$(parse(r))) # double funky

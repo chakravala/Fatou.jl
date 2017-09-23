@@ -6,8 +6,6 @@ using Colors,SymPy,PyPlot,Base.Threads
 
 export fatou, juliafill, mandelbrot, newton, basin, plot
 
-abstract AbstractFatou
-
 """
     Fatou.Define(::String;                # primary map, (z, c) -> F
       Q::String   = "abs2(z)",            # escape criterion, (z, c) -> Q
@@ -30,7 +28,7 @@ abstract AbstractFatou
 
 `Define` the metadata for a `Fatou.FilledSet`.
 """
-type Define <: AbstractFatou
+type Define
     F::Function # primary map
     Q::Function # escape criterion
     C::Function # complex fixed point coloring
@@ -81,7 +79,7 @@ end
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
-immutable FilledSet <: AbstractFatou
+immutable FilledSet
     meta::Define
     set::Matrix{Complex{Float64}}
     iter::Matrix{UInt8}
