@@ -5,10 +5,11 @@ os:
   - osx
 julia:
   - 0.6
+  - 0.7
   - nightly
 matrix:
   allow_failures:
-    - julia: nightly
+    - julia: 0.7
 env:
     global:
     - PYTHON=conda

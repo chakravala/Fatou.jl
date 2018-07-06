@@ -1,5 +1,6 @@
 module Fatou
 using SyntaxTree,Reduce,PyPlot,Base.Threads
+!(VERSION < v"0.7.0-") && (using LinearAlgebra)
 
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
@@ -28,7 +29,7 @@ export fatou, juliafill, mandelbrot, newton, basin, plot
 
 `Define` the metadata for a `Fatou.FilledSet`.
 """
-type Define
+mutable struct Define
     E::Any # input expression
     F::Function # primary map
     Q::Function # escape criterion
@@ -78,7 +79,7 @@ end
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
-immutable FilledSet
+struct FilledSet
     meta::Define
     set::Matrix{Complex{Float64}}
     iter::Matrix{UInt8}
@@ -252,7 +253,7 @@ basin(K::Define,j) = K.newt ? nrset(K.E,K.m,j) : jset(K.E,j)
 function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
     # define function for computing orbit of a z0 input
     function nf(z0::Complex{Float64})
-        K.mandel ? (z = K.seed): (z = z0)
+        K.mandel ? (z = K.seed) : (z = z0)
         zn = 0x00
         while (K.newt ? (K.Q(z,z0)::Float64>K.ϵ)::Bool : (K.Q(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
             z = K.F(z,z0)::Complex{Float64}

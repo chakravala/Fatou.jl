@@ -18,7 +18,7 @@ With `fatou` and `plot` it is simple to display a filled in Julia set:
 
 ```Julia
 c = -0.06 + 0.67im
-nf = juliafill(:(z^2+$c),∂=[-1.5,1.5,-1,1],N=80,n=1501,cmap="gnuplot",iter=true)
+nf = juliafill(:(z^2+$c),∂=[-1.5,1.5,-1,1],N=80,n=700,cmap="gnuplot",iter=true)
 plot(fatou(nf), bare=true)
 ```
 
@@ -27,7 +27,7 @@ plot(fatou(nf), bare=true)
 It is also possible to switch to `mandelbrot` mode:
 
 ```Julia
-mandelbrot(:(z^2+c),n=800,N=20,∂=[-1.91,0.51,-1.21,1.21],cmap="gist_earth") |> fatou |> plot
+mandelbrot(:(z^2+c),n=700,N=20,∂=[-1.91,0.51,-1.21,1.21],cmap="gist_earth") |> fatou |> plot
 ```
 
 ![img/mandelbrot.png](img/mandelbrot.png)

@@ -43,6 +43,6 @@ jsetstr = "\\,\\right|>\\epsilon\\right\\}"
 nset0 = latexstring("$set0 $nsetstr")
 jset0 = latexstring("$set0 $jsetstr")
 nrset(f,m,j) = latexstring(
-    j == 0 ? "$set0 $nsetstr":"$(setj(j))$(nL(f,m,j)) $nsetstr")
+    j == 0 ? "$set0 $nsetstr" : "$(setj(j))$(nL(f,m,j)) $nsetstr")
 jset(f,j) = latexstring(
-    j == 0 ? "$set0 $jsetstr":"$(setj(j))$(jL(f,j)) $jsetstr")
+    j == 0 ? "$set0 $jsetstr" : "$(setj(j))$(jL(f,j)) $jsetstr")
