@@ -1,5 +1,7 @@
 using Fatou
 using Reduce
+using LaTeXStrings
+using PyPlot
 using Base.Test
 
 load_package(:rlfi)
