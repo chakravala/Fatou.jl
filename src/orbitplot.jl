@@ -16,16 +16,10 @@ julia> juliafill("z^2-0.67",∂=[-1.25,1.5],x0=1.25,orbit=17,depth=3) |> orbit
 """
 function orbit(K::Define)
     K.x0 == nothing ? (bi = K.∂[1:2]') : (bi = [K.∂[1:2]...,K.x0]')
-    orbit(z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n))
+    orbit(K.E,z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n))
 end
 
-function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
-    if VERSION < v"0.6.0" # backwards compatability
-        f = sym2fun(u(Sym(:x)),:Float64) |> eval
-    else
-        ff = sym2fun(invokelatest(u,Sym(:x)),:Float64) |> eval
-        f(x::Float64) = invokelatest(ff,x)
-    end
+function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
     # prepare for next figure
     figure()
     # initalize array to depth
@@ -78,7 +72,7 @@ function orbit(u::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int
     xlim(bi[1],bi[2])
     ylim(minimum([d*minimum(N[:,2]),0]),maximum([d*maximum(N[:,2]),0]))
     # set title
-    fune=(VERSION < v"0.6.0") ? SymPy.latex(u(Sym("x"))) : SymPy.latex(invokelatest(u,Sym("x")))
+    fune = rdpm(Algebra.latex(E))
     title(latexstring("\$ x \\mapsto $fune\$$funt"))
     # set legend
     legend(vcat([L"$y=x$",L"$\phi(x)$",L"(x_n,\phi(x_n))"],[latexstring("\\phi^{$x}(x)") for x ∈ 2:depth],funs))
