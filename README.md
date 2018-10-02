@@ -4,6 +4,10 @@
 
 Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See [Explore Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) in Wiki for detailed *examples*. This package provides: `fatou`, `juliafill`, `mandelbrot`, `newton`, `basin`, `plot`, and `orbit`; along with various internal functionality using `Reduce` and Julia expressions to help compute `Fatou.FilledSet` efficiently. Full documentation is included. The `fatou` function can be applied to a `Fatou.Define` object to produce a `Fatou.FilledSet`, which can then be passed as an argument to the `plot` function of `PyPlot`. Creation of `Fatou.Define` objects is done via passing a `parse`-able function expression string (in variables `z`, `c`) and optional keyword arguments to `juliafill`, `mandelbrot`, and `newton`.
 
+## Launching `Fatou` on Julia 1.0.1
+
+Note that `Fatou` is not compatible with Julia 1.0 but works on Julia 1.0.1 alright. At the moment, a stackoverflow error occurs on Julia 1.0.1 when `using Fatou`, this can be avoided by having `using Reduce,Fatou` instead.
+
 ## Basic Usage
 
 Another feature is a plot function designed to visualize real-valued-orbits. The following is a cobweb orbit plot of a function:

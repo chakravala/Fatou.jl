@@ -27,7 +27,7 @@ function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::I
     bis = zeros(3)
     bis[1:length(bi)] = bi[:]
     # set x-axis coordinate set
-    x = linspace(bi[1],bi[2],incr)
+    x = range(bi[1],stop=bi[2],length=incr)
     N[:,1] = x[:]
     # loop over all discrete x-axis points in set
     # loop function composition at x val
@@ -60,7 +60,7 @@ function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::I
         plot(x,N[:,h],lw=1)
     end
     if ~(orb == 0)
-        plt(linspace(bi[1],bi[2],length(N2)),N2[:],"gray",marker="x",linestyle=":",lw=1)
+        plt(range(bi[1],stop=bi[2],length=length(N2)),N2[:],"gray",marker="x",linestyle=":",lw=1)
         funs = [latexstring("\\phi(x_{0:$orb})")]
         funt = ", IC: \$ x_0 = $(bis[3])\$, \$ n\\in0:$orb\$"
     else

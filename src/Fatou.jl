@@ -66,10 +66,11 @@ mutable struct Define
             cmap::String="")
         !(typeof(∂) <: Array) && (∂ = [-float(∂),∂,-∂,∂])
         length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
-        !newt ? (f = funk(E); q = funk(Q)) :
-        (f = funk(newton_raphson(E,m)); q = funk(Expr(:call,:abs,E)))
-        c = funK(C)
-        return new(E,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap)
+        !newt ? (f = genfun(E,[:z,:c]); q = genfun(Q,[:z,:c])) :
+        (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
+        c = genfun(C,[:z,:n,:p])
+        e = typeof(E) == String ? parse(E) : E
+        return new(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap)
     end
 end
 
@@ -263,10 +264,10 @@ function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
     end
     # generate coordinate grid
     Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
-    x = linspace(K.∂[1]+0.0001,K.∂[2],K.n)
-    y = linspace(K.∂[4],K.∂[3],Kyn)
+    x = range(K.∂[1]+0.0001,stop=K.∂[2],length=K.n)
+    y = range(K.∂[4],stop=K.∂[3],length=Kyn)
     Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
-    (matU,matF) = (Array{UInt8,2}(Kyn,K.n),Array{Complex{Float64},2}(Kyn,K.n))
+    (matU,matF) = (Array{UInt8,2}(undef,Kyn,K.n),Array{Complex{Float64},2}(undef,Kyn,K.n))
     @time @threads for j = 1:length(y); for k = 1:length(x);
         (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k])::Tuple{UInt8,Complex{Float64}}
     end; end

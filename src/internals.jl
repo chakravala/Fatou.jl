@@ -3,28 +3,12 @@
 
 import Base: invokelatest
 
-function funk(r)
-    gs = gensym()
-    eval(Expr(:function,Expr(:call,gs,:z,:c),r))
-    return (z,c)->Base.invokelatest(eval(gs),z,c)
-end
-
-function funK(r)
-    gs = gensym()
-    eval(Expr(:function,Expr(:call,gs,:z,:n,:p),r))
-    return (z,n,p)->Base.invokelatest(eval(gs),z,n,p)
-end
-
 rdpm(tex) = split(split(tex,"\n\\end{displaymath}")[1],"\\begin{displaymath}\n")[2]
 
 # we can substitute the expression into Newton's method and display it with LaTeX
 function newton_raphson(F,m)
     f = RExpr(F)
-    rr = Reduce.Rational()
-    Reduce.Rational(false)
-    out = Algebra.:-(R"z",Algebra.:*(m,Algebra.:/(f,Algebra.df(f,:z)))) |> factor |> parse
-    Reduce.Rational(rr)
-    return out
+    return Algebra.:-(R"z",Algebra.:*(m,Algebra.:/(f,Algebra.df(f,:z)))) |> factor |> parse
 end
 
 # define recursive composition on functions
