@@ -28,11 +28,11 @@ export fatou, juliafill, mandelbrot, newton, basin, plot
 
 `Define` the metadata for a `Fatou.FilledSet`.
 """
-mutable struct Define
+struct Define{FT<:Function,QT<:Function,CT<:Function,M,N}
     E::Any # input expression
-    F::Function # primary map
-    Q::Function # escape criterion
-    C::Function # complex fixed point coloring
+    F::FT # primary map
+    Q::QT # escape criterion
+    C::CT # complex fixed point coloring
     ∂::Array{Float64,1} # bounds
     n::UInt16 # number of grid points
     N::UInt8 # number of iterations
@@ -70,7 +70,7 @@ mutable struct Define
         (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
         c = genfun(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
-        return new(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap)
+        return new{typeof(f),typeof(q),typeof(c),mandel,newt}(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap)
     end
 end
 
@@ -79,14 +79,14 @@ end
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
-struct FilledSet
-    meta::Define
+struct FilledSet{FT,QT,CT,M,N}
+    meta::Define{FT,QT,CT,M,N}
     set::Matrix{Complex{Float64}}
     iter::Matrix{UInt8}
     mix::Matrix{Float64}
-    function FilledSet(K::Define)
+    function FilledSet{FT,QT,CT,M,N}(K::Define{FT,QT,CT,M,N}) where {FT,QT,CT,M,N}
         (i,s) = Compute(K)
-        return new(K,s,i,broadcast(K.C,s,broadcast(float,i./K.N),K.p))
+        return new{FT,QT,CT,M,N}(K,s,i,broadcast(K.C,s,broadcast(float,i./K.N),K.p))
     end
 end
 
@@ -100,7 +100,7 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 julia> fatou(K)
 ```
 """
-fatou(K::Define) = FilledSet(K)
+fatou(K::Define{FT,QT,CT,M,N}) where {FT,QT,CT,M,N} = FilledSet{FT,QT,CT,M,N}(K)
 
 """
     juliafill(::Expr;                     # primary map, (z, c) -> F
@@ -245,23 +245,24 @@ L"\$\\displaystyle D_2(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,z - \\fr
 """
 basin(K::Define,j) = K.newt ? nrset(K.E,K.m,j) : jset(K.E,j)
 
+# define function for computing orbit of a z0 input
+function orbit(K::Define{FT,QT,CT,M,N},z0::Complex{Float64}) where {FT,QT,CT,M,N}
+    M ? (z = K.seed) : (z = z0)
+    zn = 0x00
+    while (N ? (K.Q(z,z0)::Float64>K.ϵ)::Bool : (K.Q(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
+        z = K.F(z,z0)::Complex{Float64}
+        zn+=0x01
+    end; #end
+    # return the normalized argument of z or iteration count
+    return (zn::UInt8,z::Complex{Float64})
+end
+
 """
     Compute(::Fatou.Define)::Union{Matrix{UInt8},Matrix{Float64}}
 
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
-function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
-    # define function for computing orbit of a z0 input
-    function nf(z0::Complex{Float64})
-        K.mandel ? (z = K.seed) : (z = z0)
-        zn = 0x00
-        while (K.newt ? (K.Q(z,z0)::Float64>K.ϵ)::Bool : (K.Q(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
-            z = K.F(z,z0)::Complex{Float64}
-            zn+=0x01
-        end; #end
-        # return the normalized argument of z or iteration count
-        return (zn::UInt8,z::Complex{Float64})
-    end
+function Compute(K::Define{FT,QT,CT,M,N})::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}} where {FT,QT,CT,M,N}
     # generate coordinate grid
     Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
     x = range(K.∂[1]+0.0001,stop=K.∂[2],length=K.n)
@@ -269,7 +270,7 @@ function Compute(K::Define)::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}}
     Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
     (matU,matF) = (Array{UInt8,2}(undef,Kyn,K.n),Array{Complex{Float64},2}(undef,Kyn,K.n))
     @time @threads for j = 1:length(y); for k = 1:length(x);
-        (matU[j,k],matF[j,k]) = invokelatest(nf,Z[j,k])::Tuple{UInt8,Complex{Float64}}
+        (matU[j,k],matF[j,k]) = orbit(K,Z[j,k])::Tuple{UInt8,Complex{Float64}}
     end; end
     return (matU,matF)
 end
