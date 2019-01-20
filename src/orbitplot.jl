@@ -14,7 +14,7 @@ Plot funciton compositions of the primary `Fatou.Define` function up to any `dep
 julia> juliafill("z^2-0.67",∂=[-1.25,1.5],x0=1.25,orbit=17,depth=3) |> orbit
 ```
 """
-function orbit(K::Define)
+function orbit(K::Define{FT,QT,CT}) where {FT,QT,CT}
     K.x0 == nothing ? (bi = K.∂[1:2]') : (bi = [K.∂[1:2]...,K.x0]')
     orbit(K.E,z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n))
 end

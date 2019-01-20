@@ -4,23 +4,21 @@ os:
   - linux
   - osx
 julia:
+  - 0.7
   - 1.0
   - nightly
 matrix:
   allow_failures:
-    - julia: 1.0
+    - julia: 0.7
     - julia: nightly
-env:
-    global:
-    - PYTHON=conda
 notifications:
   email: false
 # uncomment the following lines to override the default test script
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("Fatou"); Pkg.test("Fatou"; coverage=true)'
+#script:
+#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#  - julia -e 'Pkg.clone(pwd()); Pkg.build("Reduce"); Pkg.test("Reduce"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("Fatou")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - julia -e 'cd(Pkg.dir("Reduce")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
-  - julia -e 'cd(Pkg.dir("Fatou")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'cd(Pkg.dir("Reduce")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'

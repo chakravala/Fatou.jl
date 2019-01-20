@@ -24,12 +24,9 @@ The environment variable `JULIA_NUM_THREADS` can be used to enable the multi-thr
 
 Please share your favorite fractals as `Fatou` snippet in the [discussion thread](https://discourse.julialang.org/t/ann-fatou-jl-easily-share-julia-fractals)!
 
-## Launching `Fatou` on Julia 1.0.1
-
-Note that `Fatou` is not compatible with Julia 1.0 but works on Julia 1.0.1 alright. At the moment, a stackoverflow error occurs on Julia 1.0.1 when `using Fatou`, which can be avoided by `using Reduce,Fatou` instead.
-If you encounter an unsatisfiable requirement in the package manager, an easy workaround is to use `dev Fatou` instead of `add Fatou`.
-
 ## Basic Usage
+
+The program can be initialized with `using Fatou, PyPlot` or `ImageInTerminal`.
 
 A Fatou set is a collection of complex valued orbits of an iterated function. To help illustrate this, an additional feature is a plot function designed to visualize real-valued-orbits. The following is a cobweb orbit plot of a function:
 
@@ -94,3 +91,8 @@ basin(nf,2)
 ## Detailed Explanation
 
 View [Explore Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) in Wiki for detailed *examples*.
+
+### Troubleshooting on Julia 1.0.1+
+
+Note that `Fatou` is not compatible with Julia 1.0 but works on Julia 1.0.1 alright. Note that a stackoverflow error occurs on Julia 1.0.1+ when the `Reduce` package is precompiled with `ENV["REDPRE"]` flag set, therefore it is recommended to not set it.
+If you encounter an unsatisfiable requirement in the package manager, an easy workaround is to use `dev Fatou` instead of `add Fatou`.

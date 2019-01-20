@@ -1,5 +1,5 @@
 module Fatou
-using SyntaxTree,Reduce,PyPlot,Base.Threads
+using SyntaxTree,Reduce,LaTeXStrings,Requires,Base.Threads
 
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
@@ -229,7 +229,7 @@ function newton(E;
 end
 
 # load additional functionality
-include("internals.jl"); include("orbitplot.jl")
+include("internals.jl")
 
 """
     basin(::Fatou.Define, ::Integer)
@@ -275,33 +275,10 @@ function Compute(K::Define{FT,QT,CT,M,N})::Tuple{Matrix{UInt8},Matrix{Complex{Fl
     return (matU,matF)
 end
 
-import PyPlot: plot
-
-function plot(K::FilledSet;c::String="",bare::Bool=false)
-    # plot figure using imshow based in input preferences
-    figure()
-    isempty(c) && (c = K.meta.cmap)
-    isempty(c) ? imshow(K.meta.iter ? K.iter : K.mix, extent=K.meta.∂) :
-        imshow(K.meta.iter ? K.iter : K.mix, cmap=c, extent=K.meta.∂)
-    tight_layout()
-    if !bare
-        # determine if plot is Iteration, Roots, or Limit
-        typeof(K.meta.iter ? K.iter : K.mix) == Matrix{UInt8} ? t = L"iter. " :
-            K.meta.m==1 ? t = L"roots" : t = L"limit"
-        # annotate title using LaTeX
-        ttext = "f:z\\mapsto $(rdpm(Algebra.latex(K.meta.E))),\\,"
-        if K.meta.newt
-            title(latexstring("$ttext m = $(K.meta.m), ")*t)
-            # annotate y-axis with Newton's method
-            ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
-        else
-            title(latexstring(ttext)*t)
-        end
-        tight_layout()
-        colorbar()
-    end
+function __init__()
+    println("Fatou detected $(Threads.nthreads()) julia threads.")
+    @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("pyplot.jl")
+    @require ImageInTerminal="d8c32880-2388-543b-8c61-d9f865259254" include("term.jl")
 end
-
-println("Fatou detected $(Threads.nthreads()) julia threads.")
 
 end # module
