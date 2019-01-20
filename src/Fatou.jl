@@ -229,7 +229,7 @@ function newton(E;
 end
 
 # load additional functionality
-include("internals.jl")
+include("internals.jl"); include("orbitplot.jl")
 
 """
     basin(::Fatou.Define, ::Integer)
@@ -279,6 +279,7 @@ function __init__()
     println("Fatou detected $(Threads.nthreads()) julia threads.")
     @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("pyplot.jl")
     @require ImageInTerminal="d8c32880-2388-543b-8c61-d9f865259254" include("term.jl")
+    @require UnicodePlots="b8865327-cd53-5732-bb35-84acbb429228" include("uniplots.jl")
 end
 
 end # module

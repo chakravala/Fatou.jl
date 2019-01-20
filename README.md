@@ -24,7 +24,7 @@ The environment variable `JULIA_NUM_THREADS` can be used to enable the multi-thr
 
 Please share your favorite fractals as `Fatou` snippet in the [discussion thread](https://discourse.julialang.org/t/ann-fatou-jl-easily-share-julia-fractals)!
 
-## Basic Usage
+## PyPlot.jl compatability features
 
 The program can be initialized with `using Fatou, PyPlot` or `ImageInTerminal`.
 
@@ -87,6 +87,12 @@ basin(nf,2)
 ![img/generalized-newton.png](img/generalized-newton.png)
 
 ![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20-%20\frac{\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}%20-%201\right)}{\cos{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
+
+## ImageInTerminal.jl compatibility
+
+When `using ImageInTerminal`, the display of a `Fatou.FilledSet` will be plotted automatically in the terminal.
+The `orbit` method also has optional `UnicodePlots` compatibility.
+Additional plotting support can be added via Pull-Request by adding another `Requires` script to the `__init__()` function definition.
 
 ## Detailed Explanation
 

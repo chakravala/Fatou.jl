@@ -29,4 +29,35 @@ function plot(K::FilledSet;c::String="",bare::Bool=false)
     end
 end
 
-include("orbitplot.jl")
+function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384; plt::Function=plot)
+    x,N,N2,orbit,bis = real_orb(E,f,bi,orb,depth,incr)
+    # prepare for next figure
+    figure()
+    # plot background lines
+    plot(x[:],N[:,1],"k--",x[:],N[:,2])
+    # plot orbit cobweb path
+    plot(orbit[:,1],orbit[:,2],"r")
+    # plot f^2,f^3,f^4,...
+    for h ∈ 3:depth+1
+        plot(x,N[:,h],lw=1)
+    end
+    if ~(orb == 0)
+        plt(range(bi[1],stop=bi[2],length=length(N2)),N2[:],"gray",marker="x",linestyle=":",lw=1)
+        funs = [latexstring("\\phi(x_{0:$orb})")]
+        funt = ", IC: \$ x_0 = $(bis[3])\$, \$ n\\in0:$orb\$"
+    else
+        funs = []
+        funt = ""
+    end
+    # trim graph
+    d=1.07
+    xlim(bi[1],bi[2])
+    ylim(minimum([d*minimum(N[:,2]),0]),maximum([d*maximum(N[:,2]),0]))
+    # set title
+    fune = rdpm(Algebra.latex(E))
+    PyPlot.title(latexstring("\$ x \\mapsto $fune\$$funt"))
+    # set legend
+    legend(vcat([L"$y=x$",L"$\phi(x)$",L"(x_n,\phi(x_n))"],[latexstring("\\phi^{$x}(x)") for x ∈ 2:depth],funs))
+    tight_layout()
+    return
+end
