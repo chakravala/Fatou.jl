@@ -24,11 +24,13 @@ export fatou, juliafill, mandelbrot, newton, basin, plot
       x0          = nothing,              # orbit starting point
       orbit::Int  = 0,                    # orbit cobweb depth
       depth::Int  = 1,                    # depth of function composition
-      cmap::String= "")                   # imshow color map
+      cmap::String= "",                   # imshow color map
+      plane::Bool = false,                # convert input disk to half-plane
+      disk::Bool  = false)                # convert output half-plane to disk
 
 `Define` the metadata for a `Fatou.FilledSet`.
 """
-struct Define{FT<:Function,QT<:Function,CT<:Function,M,N}
+struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D}
     E::Any # input expression
     F::FT # primary map
     Q::QT # escape criterion
@@ -47,6 +49,8 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N}
     orbit::Int # orbit cobweb depth
     depth::Int # depth of function composition
     cmap::String # imshow color map
+    plane::Bool # convert input disk to half-plane
+    disk::Bool # convert output half-plane to disk
     function Define(E;
             Q=:(abs2(z)),
             C=:((angle(z)/(2π))*n^p),
@@ -63,14 +67,16 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N}
             x0=nothing,
             orbit::Int=0,
             depth::Int=1,
-            cmap::String="")
+            cmap::String="",
+            plane::Bool=false,
+            disk::Bool=false)
         !(typeof(∂) <: Array) && (∂ = [-float(∂),∂,-∂,∂])
         length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
         !newt ? (f = genfun(E,[:z,:c]); q = genfun(Q,[:z,:c])) :
         (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
         c = genfun(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
-        return new{typeof(f),typeof(q),typeof(c),mandel,newt}(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap)
+        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
     end
 end
 
@@ -79,14 +85,14 @@ end
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
-struct FilledSet{FT,QT,CT,M,N}
-    meta::Define{FT,QT,CT,M,N}
+struct FilledSet{FT,QT,CT,M,N,P,D}
+    meta::Define{FT,QT,CT,M,N,P,D}
     set::Matrix{Complex{Float64}}
     iter::Matrix{UInt8}
     mix::Matrix{Float64}
-    function FilledSet{FT,QT,CT,M,N}(K::Define{FT,QT,CT,M,N}) where {FT,QT,CT,M,N}
+    function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D}) where {FT,QT,CT,M,N,P,D}
         (i,s) = Compute(K)
-        return new{FT,QT,CT,M,N}(K,s,i,broadcast(K.C,s,broadcast(float,i./K.N),K.p))
+        return new{FT,QT,CT,M,N,P,D}(K,s,i,broadcast(K.C,s,broadcast(float,i./K.N),K.p))
     end
 end
 
@@ -100,7 +106,7 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 julia> fatou(K)
 ```
 """
-fatou(K::Define{FT,QT,CT,M,N}) where {FT,QT,CT,M,N} = FilledSet{FT,QT,CT,M,N}(K)
+fatou(K::Define{FT,QT,CT,M,N,P,D}) where {FT,QT,CT,M,N,P,D} = FilledSet{FT,QT,CT,M,N,P,D}(K)
 
 """
     juliafill(::Expr;                     # primary map, (z, c) -> F
@@ -115,7 +121,9 @@ fatou(K::Define{FT,QT,CT,M,N}) where {FT,QT,CT,M,N} = FilledSet{FT,QT,CT,M,N}(K)
       x0          = nothing,              # orbit starting point
       orbit::Int  = 0,                    # orbit cobweb depth
       depth::Int  = 1,                    # depth of function composition
-      cmap::String= "")                   # imshow color map
+      cmap::String= "",                   # imshow color map
+      plane::Bool = false,                # convert input disk to half-plane
+      disk::Bool  = false)                # convert output half-plane to disk
 
 `Define` filled Julia basin in `Fatou`
 
@@ -138,8 +146,10 @@ function juliafill(E;
         x0=nothing,
         orbit::Int=0,
         depth::Int=1,
-        cmap::String="")
-    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,x0=x0,orbit=orbit,depth=depth,cmap=cmap)
+        cmap::String="",
+        plane::Bool=false,
+        disk::Bool=false)
+    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk)
 end
 
 """
@@ -157,7 +167,9 @@ end
       x0          = nothing,              # orbit starting point
       orbit::Int  = 0,                    # orbit cobweb depth
       depth::Int  = 1,                    # depth of function composition
-      cmap::String= "")                   # imshow color map
+      cmap::String= "",                   # imshow color map
+      plane::Bool = false,                # convert input disk to half-plane
+      disk::Bool  = false)                # convert output half-plane to disk
 
 `Define` Mandelbrot basin in `Fatou`
 
@@ -181,9 +193,11 @@ function mandelbrot(E;
         x0=nothing,
         orbit::Int=0,
         depth::Int=1,
-        cmap::String="")
+        cmap::String="",
+        plane::Bool=false,
+        disk::Bool=false)
     m ≠ 0 && (newt = true)
-    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,mandel=true,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap)
+    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,mandel=true,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk)
 end
 
 """
@@ -201,7 +215,9 @@ end
       x0          = nothing,              # orbit starting point
       orbit::Int  = 0,                    # orbit cobweb depth
       depth::Int  = 1,                    # depth of function composition
-      cmap::String= "")                   # imshow color map
+      cmap::String= "",                   # imshow color map
+      plane::Bool = false,                # convert input disk to half-plane
+      disk::Bool  = false)                # convert output half-plane to disk
 
 `Define` Newton basin in `Fatou`
 
@@ -224,8 +240,10 @@ function newton(E;
         x0=nothing,
         orbit::Int=0,
         depth::Int=1,
-        cmap::String="")
-    return Define(E,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=true,m=m,mandel=mandel,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap)
+        cmap::String="",
+        plane::Bool=false,
+        disk::Bool=false)
+    return Define(E,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=true,m=m,mandel=mandel,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk)
 end
 
 # load additional functionality
@@ -245,16 +263,19 @@ L"\$\\displaystyle D_2(\\epsilon) = \\left\\{z\\in\\mathbb{C}:\\left|\\,z - \\fr
 """
 basin(K::Define,j) = K.newt ? nrset(K.E,K.m,j) : jset(K.E,j)
 
+plane(z::Complex) = (2z.re/(z.re^2+(1-z.im)^2))+im*(1-z.re^2-z.im^2)/(z.re^2+(1-z.im)^2)
+disk(z::Complex) = (2z.re/(z.re^2+(1+z.im)^2))+im*(z.re^2+z.im^2-1)/(z.re^2+(1+z.im)^2)
+
 # define function for computing orbit of a z0 input
-function orbit(K::Define{FT,QT,CT,M,N},z0::Complex{Float64}) where {FT,QT,CT,M,N}
-    M ? (z = K.seed) : (z = z0)
+function orbit(K::Define{FT,QT,CT,M,N,P,D},z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D}
+    M ? (z = K.seed) : (z = P ? plane(z0) : z0)
     zn = 0x00
     while (N ? (K.Q(z,z0)::Float64>K.ϵ)::Bool : (K.Q(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
         z = K.F(z,z0)::Complex{Float64}
         zn+=0x01
     end; #end
     # return the normalized argument of z or iteration count
-    return (zn::UInt8,z::Complex{Float64})
+    return (zn::UInt8,(D ? disk(z) : z)::Complex{Float64})
 end
 
 """
@@ -262,7 +283,7 @@ end
 
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
-function Compute(K::Define{FT,QT,CT,M,N})::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}} where {FT,QT,CT,M,N}
+function Compute(K::Define{FT,QT,CT,M,N,D})::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}} where {FT,QT,CT,M,N,D}
     # generate coordinate grid
     Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
     x = range(K.∂[1]+0.0001,stop=K.∂[2],length=K.n)

@@ -18,11 +18,11 @@ function plot(K::FilledSet;c::String="",bare::Bool=false)
         # annotate title using LaTeX
         ttext = "f:z\\mapsto $(rdpm(Algebra.latex(K.meta.E))),\\,"
         if K.meta.newt
-            title(latexstring("$ttext m = $(K.meta.m), ")*t)
+            PyPlot.title(latexstring("$ttext m = $(K.meta.m), ")*t)
             # annotate y-axis with Newton's method
             ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
         else
-            title(latexstring(ttext)*t)
+            PyPlot.title(latexstring(ttext)*t)
         end
         tight_layout()
         colorbar()
