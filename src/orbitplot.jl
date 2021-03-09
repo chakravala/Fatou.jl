@@ -15,7 +15,7 @@ julia> juliafill("z^2-0.67",∂=[-1.25,1.5],x0=1.25,orbit=17,depth=3) |> orbit
 ```
 """
 function orbit(K::Define{FT,QT,CT}) where {FT,QT,CT}
-    !isdefined(Fatou,:UnicodePlots) && !isdefined(Fatou,:PyPlot) && throw(error("Requires `using PyPlot` or `using UnicodePlots`"))
+    !isdefined(Fatou,:UnicodePlots) && !isdefined(Fatou,:PyPlot) && !isdefined(Fatou,:Makie) && throw(error("Requires `using PyPlot` or `using UnicodePlots` or `using Makie`"))
     K.x0 == nothing ? (bi = K.∂[1:2]') : (bi = [K.∂[1:2]...,K.x0]')
     orbit(K.E,z->K.F(z,0),convert(Array{Float64},bi),K.orbit,K.depth,Int(K.n))
 end

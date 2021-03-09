@@ -37,7 +37,7 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D}
     C::CT # complex fixed point coloring
     ∂::Array{Float64,1} # bounds
     n::UInt16 # number of grid points
-    N::UInt8 # number of iterations
+    N::UInt16 # number of iterations
     ϵ::Float64 # epsilon Limit criterion
     iter::Bool # toggle iteration mode
     p::Float64 # iteration color exponent
@@ -76,7 +76,7 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D}
         (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
         c = genfun(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
-        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt8(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
+        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
     end
 end
 
@@ -88,7 +88,7 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 struct FilledSet{FT,QT,CT,M,N,P,D}
     meta::Define{FT,QT,CT,M,N,P,D}
     set::Matrix{Complex{Float64}}
-    iter::Matrix{UInt8}
+    iter::Matrix{UInt16}
     mix::Matrix{Float64}
     function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D}) where {FT,QT,CT,M,N,P,D}
         (i,s) = Compute(K)
@@ -269,37 +269,80 @@ disk(z::Complex) = (2z.re/(z.re^2+(1+z.im)^2))+im*(z.re^2+z.im^2-1)/(z.re^2+(1+z
 # define function for computing orbit of a z0 input
 function orbit(K::Define{FT,QT,CT,M,N,P,D},z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D}
     M ? (z = K.seed) : (z = P ? plane(z0) : z0)
-    zn = 0x00
+    zn = 0x0000
     while (N ? (K.Q(z,z0)::Float64>K.ϵ)::Bool : (K.Q(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
         z = K.F(z,z0)::Complex{Float64}
-        zn+=0x01
+        zn+=0x0001
     end; #end
     # return the normalized argument of z or iteration count
-    return (zn::UInt8,(D ? disk(z) : z)::Complex{Float64})
+    return (zn::UInt16,(D ? disk(z) : z)::Complex{Float64})
 end
+
+gridy(K::Define) = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
+
+ranges(K::FilledSet) = ranges(K.meta)
+function ranges(K::Define)
+    x = range(K.∂[1]+0.0001,stop=K.∂[2],length=K.n)
+    y = range(K.∂[4],stop=K.∂[3],length=gridy(K))
+    return x,y
+end
+
+function grid(K::Define) # generate coordinate grid
+    x, y = ranges(K); x' .+ im*y
+end # apply Newton-Orbit function element-wise to coordinate grid
 
 """
     Compute(::Fatou.Define)::Union{Matrix{UInt8},Matrix{Float64}}
 
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
-function Compute(K::Define{FT,QT,CT,M,N,D})::Tuple{Matrix{UInt8},Matrix{Complex{Float64}}} where {FT,QT,CT,M,N,D}
-    # generate coordinate grid
-    Kyn = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
-    x = range(K.∂[1]+0.0001,stop=K.∂[2],length=K.n)
-    y = range(K.∂[4],stop=K.∂[3],length=Kyn)
-    Z = x' .+ im*y # apply Newton-Orbit function element-wise to coordinate grid
-    (matU,matF) = (Array{UInt8,2}(undef,Kyn,K.n),Array{Complex{Float64},2}(undef,Kyn,K.n))
-    @time @threads for j = 1:length(y); for k = 1:length(x);
-        (matU[j,k],matF[j,k]) = orbit(K,Z[j,k])::Tuple{UInt8,Complex{Float64}}
+function Compute(K::Define{FT,QT,CT,M,N,D})::Tuple{Matrix{UInt16},Matrix{Complex{Float64}}} where {FT,QT,CT,M,N,D}
+    Z,Kyn = grid(K),gridy(K)
+    (matU,matF) = (Array{UInt16,2}(undef,Kyn,K.n),Array{Complex{Float64},2}(undef,Kyn,K.n))
+    @time @threads for j = 1:size(Z)[1]; for k = 1:size(Z)[2];
+        (matU[j,k],matF[j,k]) = orbit(K,Z[j,k])::Tuple{UInt16,Complex{Float64}}
     end; end
     return (matU,matF)
 end
 
+# determine if plot is Iteration, Roots, or Limit
+typeplot(K::FilledSet) = typeof(K.meta.iter ? K.iter : K.mix) == Matrix{UInt16} ? "iter." : K.meta.m==1 ? "roots" : "limit"
+
+function Base.String(K::FilledSet) # annotate title using LaTeX
+    text,t = "f : z ↦ $(K.meta.E),",typeplot(K)
+    K.meta.newt ? "$text m = $(K.meta.m), $t" : "$text $t"
+end
+
 function __init__()
     println("Fatou detected $(Threads.nthreads()) julia threads.")
+    @require ColorSchemes="35d6a980-a343-548e-a6ea-1d62b119f2f4" begin
+        nonan(x) = isnan(x) ? 0.0 : x
+        function (C::ColorSchemes.ColorScheme)(K::FilledSet)
+            S = size(K.iter)
+            H = zeros(ColorSchemes.RGB{Float64},S...)
+            if K.meta.iter
+                M = length(C)/(maximum(K.iter)+1)
+                for x ∈ 1:S[1], y ∈ 1:S[2]
+                    H[x,y] = C[round(Int,M*(K.iter[x,y]+1),RoundUp)]
+                end
+            else
+                for x ∈ 1:S[1], y ∈ 1:S[2]
+                    H[x,y] = get(C,nonan(K.mix[x,y]))
+                end
+            end
+            return H
+        end
+    end
+    @require ImageInTerminal="d8c32880-2388-543b-8c61-d9f865259254" begin
+        import ColorSchemes
+        function Base.show(io::IO,K::FilledSet;c::String="",bare::Bool=false)
+            isempty(c) && (c = K.meta.cmap)
+            display(getproperty(ColorSchemes, isempty(c) ? :balance : Symbol(c))(K))
+            !bare && print(io,String(K))
+        end
+    end
+    @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("makie.jl")
     @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("pyplot.jl")
-    @require ImageInTerminal="d8c32880-2388-543b-8c61-d9f865259254" include("term.jl")
     @require UnicodePlots="b8865327-cd53-5732-bb35-84acbb429228" include("uniplots.jl")
 end
 

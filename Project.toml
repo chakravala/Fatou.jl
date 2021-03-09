@@ -1,0 +1,25 @@
+name = "Fatou"
+uuid = "5f923234-c850-556d-bb4f-28324fa1959a"
+authors = ["Michael Reed"]
+version = "1.1.1"
+
+[deps]
+ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+SyntaxTree = "a4af3ec5-f8ac-5fed-a759-c2e80b4d74cb"
+Reduce = "93e0c654-6965-5f22-aba9-9c1ae6b3c259"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+
+[compat]
+julia = "1"
+Reduce = "1.2"
+Requires = "1"
+SyntaxTree = "1"
+ColorSchemes = "3"
+LaTeXStrings = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chakravala/Fatou.jl.svg?branch=master)](https://travis-ci.org/chakravala/Fatou.jl) [![Build status](https://ci.appveyor.com/api/projects/status/mdathjmu7jg57u77?svg=true)](https://ci.appveyor.com/project/chakravala/fatou-jl) [![Coverage Status](https://coveralls.io/repos/github/chakravala/Fatou.jl/badge.svg?branch=master)](https://coveralls.io/github/chakravala/Fatou.jl?branch=master) [![codecov.io](http://codecov.io/github/chakravala/Fatou.jl/coverage.svg?branch=master)](http://codecov.io/github/chakravala/Fatou.jl?branch=master)
 
-Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See [Explore Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) in Wiki for detailed *examples*. This package provides: `fatou`, `juliafill`, `mandelbrot`, `newton`, `basin`, `plot`, and `orbit`; along with various internal functionality using `Reduce` and Julia expressions to help compute `Fatou.FilledSet` efficiently. Full documentation is included. The `fatou` function can be applied to a `Fatou.Define` object to produce a `Fatou.FilledSet`, which can then be passed as an argument to the `plot` function of `PyPlot`. Creation of `Fatou.Define` objects is done via passing a `parse`-able function expression string (in variables `z`, `c`) and optional keyword arguments to `juliafill`, `mandelbrot`, and `newton`.
+Julia package for Fatou sets. Install using `Pkg.add("Fatou")` in Julia. See [Explore Fatou sets & Fractals](https://crucialflow.com/Fatou.jl) in Wiki for detailed *examples*. This package provides: `fatou`, `juliafill`, `mandelbrot`, `newton`, `basin`, `plot`, and `orbit`; along with various internal functionality using `Reduce` and Julia expressions to help compute `Fatou.FilledSet` efficiently. Full documentation is included. The `fatou` function can be applied to a `Fatou.Define` object to produce a `Fatou.FilledSet`, which can then be passed as an argument to `plot` functions of `Makie`, `PyPlot`, `ImageInTerminal`. Creation of `Fatou.Define` objects is done via passing a `parse`-able function expression string (in variables `z`, `c`) and optional keyword arguments to `juliafill`, `mandelbrot`, and `newton`.
 
 ## Background
 
@@ -22,13 +22,40 @@ The number of Julia threads available is detected at the startup and is reported
 Since each pixel is independent of any other pixel, it doesn’t matter in what order or on how many threads it is computed, the more you use the faster it is.
 The environment variable `JULIA_NUM_THREADS` can be used to enable the multi-threading for more than 1 thread.
 
-Please share your favorite fractals as `Fatou` snippet in the [discussion thread](https://discourse.julialang.org/t/ann-fatou-jl-easily-share-julia-fractals)!
+Please share with us your favorite fractals as `Fatou` code snippets!
 
-## PyPlot.jl compatability features
+## Examples
 
-The program can be initialized with `using Fatou, PyPlot` or `ImageInTerminal`.
+`Fatou.Define` provides the following optional keyword arguments:
 
-A Fatou set is a collection of complex valued orbits of an iterated function. To help illustrate this, an additional feature is a plot function designed to visualize real-valued-orbits. The following is a cobweb orbit plot of a function:
+```Julia
+Q::Expr 	= :(abs2(z)),           # escape criterion, (z, c) -> Q
+C::Expr 	= :((angle(z)/(2π))*n^p)# coloring, (z, n=iter., p=exp.) -> C
+∂    = π/2, # Array{Float64,1}      # Bounds, [x(a),x(b),y(a),y(b)]
+n::Integer  = 176,                  # vertical grid points
+N::Integer  = 35,                   # max. iterations
+ϵ::Number   = 4,                    # basin ϵ-Limit criterion
+iter::Bool  = false,                # toggle iteration mode
+p::Number   = 0,                    # iteration color exponent
+newt::Bool  = false,                # toggle Newton mode
+m::Number   = 0,                    # Newton multiplicity factor
+mandel::Bool= false,                # toggle Mandelbrot mode
+seed::Number= 0.0+0.0im,            # Mandelbrot seed value
+x0          = nothing,              # orbit starting point
+orbit::Int  = 0,                    # orbit cobweb depth
+depth::Int  = 1,                    # depth of function composition
+cmap::String= ""                    # imshow color map
+```
+
+A Fatou set is a collection of complex valued orbits of an iterated function. To help illustrate this, an additional feature is a plot function designed to visualize real-valued-orbits.
+The program can be initialized with `using Fatou, PyPlot` or `Makie` or `ImageInTerminal`.
+For `PyPlot` the `imshow` and `plot` methods can be used, while for `Makie` the `heatmap`, `contour`, `surface`, and `arrows` methods can be used.
+
+When `using ImageInTerminal`, the display of a `Fatou.FilledSet` will be plotted automatically in the terminal.
+The `orbit` method also has optional `UnicodePlots` compatibility.
+Additional plotting support can be added via Pull-Request by adding another `Requires` script to the `__init__()` function definition.
+
+The following is a cobweb orbit plot of a function:
 
 ```Julia
 juliafill(:(z^2-0.67),∂=[-1.25,1.5],x0=1.25,orbit=17,depth=3,n=147) |> orbit
@@ -88,15 +115,7 @@ basin(nf,2)
 
 ![D2(ϵ)](http://latex.codecogs.com/svg.latex?D_2(\epsilon)%20=%20\left\\{z\in\mathbb{C}:\left|\\,z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20-%20\frac{\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}%20-%201\right)}{\cos{\left%20(z%20-%20\frac{1}{\cos{\left%20(z%20\right%20)}}%20\left(1%20+%20i\right)%20\left(\sin{\left%20(z%20\right%20)}%20-%201\right)%20\right%20)}}%20-%20r_i\\,\right|%3C\epsilon,\\,\forall%20r_i(\\,f(r_i)=0%20)\right\\})
 
-## ImageInTerminal.jl compatibility
-
-When `using ImageInTerminal`, the display of a `Fatou.FilledSet` will be plotted automatically in the terminal.
-The `orbit` method also has optional `UnicodePlots` compatibility.
-Additional plotting support can be added via Pull-Request by adding another `Requires` script to the `__init__()` function definition.
-
-## Detailed Explanation
-
-View [Explore Fatou sets & Fractals](https://github.com/chakravala/Fatou.jl/wiki/Explore-Fatou-sets-&-fractals) in Wiki for detailed *examples*.
+View [Explore Fatou sets & Fractals](https://crucialflow.com/Fatou.jl) in Wiki for detailed *examples*.
 
 ### Troubleshooting on Julia 1.0.1+
 
