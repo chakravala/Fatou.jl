@@ -43,7 +43,7 @@ end
 
 function Makie.arrows(K::FilledSet;bare::Bool=false,args...)
     r1,r2 = ranges(K)
-    Z = transpose(K.set)
+    Z = transpose(K.set.Ω)
     Makie.arrows(r1,r2,real.(Z),imag.(Z);args...)
 end
 

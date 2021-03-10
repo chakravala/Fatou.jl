@@ -6,6 +6,20 @@ using SyntaxTree,Reduce,LaTeXStrings,Requires,Base.Threads
 
 export fatou, juliafill, mandelbrot, newton, basin, plot
 
+abstract type ComplexBundle end
+
+struct Rectangle <: ComplexBundle
+    ∂::Vector{Float64} # bounds
+    n::UInt16 # number of grid points
+end
+
+struct ComplexRectangle <: ComplexBundle
+    ∂::Rectangle
+    Ω::Matrix{Complex{Float64}}
+end
+
+ComplexRectangle(Ω::Matrix{Complex{Float64}}) = ComplexRectangle(Rectangle([0,size(Ω)[2],0,size(Ω)[1]],size(Ω)[2]),Ω)
+
 """
     Fatou.Define(E::Any;                  # primary map, (z, c) -> F
       Q::Expr     = :(abs2(z)),           # escape criterion, (z, c) -> Q
@@ -30,13 +44,12 @@ export fatou, juliafill, mandelbrot, newton, basin, plot
 
 `Define` the metadata for a `Fatou.FilledSet`.
 """
-struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D}
+struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D} <: ComplexBundle
     E::Any # input expression
     F::FT # primary map
     Q::QT # escape criterion
     C::CT # complex fixed point coloring
-    ∂::Array{Float64,1} # bounds
-    n::UInt16 # number of grid points
+    Ω::Rectangle # bounded grid points
     N::UInt16 # number of iterations
     ϵ::Float64 # epsilon Limit criterion
     iter::Bool # toggle iteration mode
@@ -76,7 +89,7 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D}
         (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
         c = genfun(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
-        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,convert(Array{Float64,1},∂),UInt16(n),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
+        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,Rectangle(convert(Vector{Float64},∂),UInt16(n)),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
     end
 end
 
@@ -85,18 +98,31 @@ end
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
-struct FilledSet{FT,QT,CT,M,N,P,D}
+struct FilledSet{FT,QT,CT,M,N,P,D} <: ComplexBundle
     meta::Define{FT,QT,CT,M,N,P,D}
-    set::Matrix{Complex{Float64}}
+    set::ComplexRectangle
     iter::Matrix{UInt16}
     mix::Matrix{Float64}
-    function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D}) where {FT,QT,CT,M,N,P,D}
-        (i,s) = Compute(K)
-        return new{FT,QT,CT,M,N,P,D}(K,s,i,broadcast(K.C,s,broadcast(float,i./K.N),K.p))
+    function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle=grid(K)) where {FT,QT,CT,M,N,P,D}
+        (i,s) = Compute(K,Z)
+        return new{FT,QT,CT,M,N,P,D}(K,s,i,broadcast(K.C,s.Ω,broadcast(float,i./K.N),K.p))
     end
 end
 
-  """
+ranges(K::FilledSet) = ranges(K.meta)
+ranges(K::Define) = ranges(K.Ω)
+function ranges(Ω::Rectangle)
+    yn = round(UInt16,(Ω.∂[4]-Ω.∂[3])/(Ω.∂[2]-Ω.∂[1])*Ω.n)
+    x = range(Ω.∂[1]+0.0001,stop=Ω.∂[2],length=Ω.n)
+    y = range(Ω.∂[4],stop=Ω.∂[3],length=yn)
+    return x,y
+end
+
+grid(K::FilledSet) = grid(K.meta)
+grid(K::Define) = grid(K.Ω)
+grid(K::Rectangle) = fatou(K)
+
+"""
       fatou(::Fatou.Define)
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
@@ -106,7 +132,15 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 julia> fatou(K)
 ```
 """
-fatou(K::Define{FT,QT,CT,M,N,P,D}) where {FT,QT,CT,M,N,P,D} = FilledSet{FT,QT,CT,M,N,P,D}(K)
+fatou(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle=grid(K)) where {FT,QT,CT,M,N,P,D} = FilledSet{FT,QT,CT,M,N,P,D}(K,Z)
+fatou(K::Define,Z::Rectangle) = fatou(K,grid(Z))
+fatou(K::Define,Z::FilledSet) = fatou(K,Z.set)
+fatou(K::Define,Z::Define) = fatou(K,fatou(Z))
+fatou(K::FilledSet,Z=K.set) = fatou(K.meta,Z)
+function fatou(K::Rectangle) # generate coordinate grid
+    x, y = ranges(K)
+    ComplexRectangle(K, x' .+ im*y)
+end # apply Newton-Orbit function element-wise to coordinate grid
 
 """
     juliafill(::Expr;                     # primary map, (z, c) -> F
@@ -278,31 +312,18 @@ function orbit(K::Define{FT,QT,CT,M,N,P,D},z0::Complex{Float64}) where {FT,QT,CT
     return (zn::UInt16,(D ? disk(z) : z)::Complex{Float64})
 end
 
-gridy(K::Define) = round(UInt16,(K.∂[4]-K.∂[3])/(K.∂[2]-K.∂[1])*K.n)
-
-ranges(K::FilledSet) = ranges(K.meta)
-function ranges(K::Define)
-    x = range(K.∂[1]+0.0001,stop=K.∂[2],length=K.n)
-    y = range(K.∂[4],stop=K.∂[3],length=gridy(K))
-    return x,y
-end
-
-function grid(K::Define) # generate coordinate grid
-    x, y = ranges(K); x' .+ im*y
-end # apply Newton-Orbit function element-wise to coordinate grid
-
 """
     Compute(::Fatou.Define)::Union{Matrix{UInt8},Matrix{Float64}}
 
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
-function Compute(K::Define{FT,QT,CT,M,N,D})::Tuple{Matrix{UInt16},Matrix{Complex{Float64}}} where {FT,QT,CT,M,N,D}
-    Z,Kyn = grid(K),gridy(K)
-    (matU,matF) = (Array{UInt16,2}(undef,Kyn,K.n),Array{Complex{Float64},2}(undef,Kyn,K.n))
-    @time @threads for j = 1:size(Z)[1]; for k = 1:size(Z)[2];
-        (matU[j,k],matF[j,k]) = orbit(K,Z[j,k])::Tuple{UInt16,Complex{Float64}}
+function Compute(K::Define{FT,QT,CT,M,N,D},Z::ComplexRectangle=grid(K))::Tuple{Matrix{UInt16},ComplexRectangle} where {FT,QT,CT,M,N,D}
+    yn,xn = size(Z.Ω)
+    (matU,matF) = (Matrix{UInt16}(undef,yn,xn),Matrix{Complex{Float64}}(undef,yn,xn))
+    @time @threads for j = 1:yn; for k = 1:xn;
+        (matU[j,k],matF[j,k]) = orbit(K,Z.Ω[j,k])::Tuple{UInt16,Complex{Float64}}
     end; end
-    return (matU,matF)
+    return (matU,ComplexRectangle(Z.∂,matF))
 end
 
 # determine if plot is Iteration, Roots, or Limit
