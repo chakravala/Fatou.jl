@@ -11,6 +11,11 @@ abstract type ComplexBundle end
 struct Rectangle <: ComplexBundle
     ∂::Vector{Float64} # bounds
     n::UInt16 # number of grid points
+    function Rectangle(∂::T=π/2,n::Integer=176) where T
+        !(T <: Array) && (∂ = [-float(∂),∂,-∂,∂])
+        length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
+        new(convert(Vector{Float64},∂),UInt16(n))
+    end
 end
 
 struct ComplexRectangle <: ComplexBundle
@@ -18,7 +23,10 @@ struct ComplexRectangle <: ComplexBundle
     Ω::Matrix{Complex{Float64}}
 end
 
-ComplexRectangle(Ω::Matrix{Complex{Float64}}) = ComplexRectangle(Rectangle([0,size(Ω)[2],0,size(Ω)[1]],size(Ω)[2]),Ω)
+bounds(R::ComplexRectangle) = bounds(Rectangle(R))
+bounds(Ω::Rectangle) = R.∂
+Base.size(Ω::Rectangle) = (round(UInt16,(Ω.∂[4]-Ω.∂[3])/(Ω.∂[2]-Ω.∂[1])*Ω.n),Ω.n)
+Base.size(R::ComplexRectangle) = size(R.Ω)
 
 """
     Fatou.Define(E::Any;                  # primary map, (z, c) -> F
@@ -83,13 +91,11 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D} <: ComplexBundle
             cmap::String="",
             plane::Bool=false,
             disk::Bool=false)
-        !(typeof(∂) <: Array) && (∂ = [-float(∂),∂,-∂,∂])
-        length(∂) == 2 && (∂ = [∂[1],∂[2],∂[1],∂[2]])
         !newt ? (f = genfun(E,[:z,:c]); q = genfun(Q,[:z,:c])) :
         (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
         c = genfun(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
-        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,Rectangle(convert(Vector{Float64},∂),UInt16(n)),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
+        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,Rectangle(∂,n),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
     end
 end
 
@@ -103,24 +109,30 @@ struct FilledSet{FT,QT,CT,M,N,P,D} <: ComplexBundle
     set::ComplexRectangle
     iter::Matrix{UInt16}
     mix::Matrix{Float64}
-    function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle=grid(K)) where {FT,QT,CT,M,N,P,D}
+    function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle) where {FT,QT,CT,M,N,P,D}
         (i,s) = Compute(K,Z)
         return new{FT,QT,CT,M,N,P,D}(K,s,i,broadcast(K.C,s.Ω,broadcast(float,i./K.N),K.p))
     end
 end
 
+Rectangle(K::Define) = K.Ω
+Rectangle(K::FilledSet) = Rectangle(ComplexRectangle(K))
+Rectangle(R::ComplexRectangle) = R.∂
+
+ComplexRectangle(K::FilledSet) = K.set
+ComplexRectangle(Ω::Matrix{Complex{Float64}}) = ComplexRectangle(Rectangle([0,size(Ω)[2],0,size(Ω)[1]],size(Ω)[2]),Ω)
+
 ranges(K::FilledSet) = ranges(K.meta)
-ranges(K::Define) = ranges(K.Ω)
+ranges(K::Define) = ranges(Rectangle(K))
 function ranges(Ω::Rectangle)
-    yn = round(UInt16,(Ω.∂[4]-Ω.∂[3])/(Ω.∂[2]-Ω.∂[1])*Ω.n)
-    x = range(Ω.∂[1]+0.0001,stop=Ω.∂[2],length=Ω.n)
+    yn,xn = size(Ω)
+    x = range(Ω.∂[1]+0.0001,stop=Ω.∂[2],length=xn)
     y = range(Ω.∂[4],stop=Ω.∂[3],length=yn)
     return x,y
 end
 
-grid(K::FilledSet) = grid(K.meta)
-grid(K::Define) = grid(K.Ω)
-grid(K::Rectangle) = fatou(K)
+(K::Define)(Z) = fatou(K,Z)
+(K::FilledSet)(Z) = fatou(K,Z)
 
 """
       fatou(::Fatou.Define)
@@ -132,11 +144,11 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 julia> fatou(K)
 ```
 """
-fatou(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle=grid(K)) where {FT,QT,CT,M,N,P,D} = FilledSet{FT,QT,CT,M,N,P,D}(K,Z)
-fatou(K::Define,Z::Rectangle) = fatou(K,grid(Z))
-fatou(K::Define,Z::FilledSet) = fatou(K,Z.set)
+fatou(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle) where {FT,QT,CT,M,N,P,D} = FilledSet{FT,QT,CT,M,N,P,D}(K,Z)
+fatou(K::Define,Z::Rectangle=Rectangle(K)) = fatou(K,fatou(Z))
+fatou(K::Define,Z::FilledSet) = fatou(K,ComplexRectangle(Z))
 fatou(K::Define,Z::Define) = fatou(K,fatou(Z))
-fatou(K::FilledSet,Z=K.set) = fatou(K.meta,Z)
+fatou(K::FilledSet,Z=ComplexRectangle(K)) = fatou(K.meta,Z)
 function fatou(K::Rectangle) # generate coordinate grid
     x, y = ranges(K)
     ComplexRectangle(K, x' .+ im*y)
@@ -317,13 +329,13 @@ end
 
 `Compute` the `Array` for `Fatou.FilledSet` as specefied by `Fatou.Define`.
 """
-function Compute(K::Define{FT,QT,CT,M,N,D},Z::ComplexRectangle=grid(K))::Tuple{Matrix{UInt16},ComplexRectangle} where {FT,QT,CT,M,N,D}
-    yn,xn = size(Z.Ω)
+function Compute(K::Define{FT,QT,CT,M,N,D},Z::ComplexRectangle)::Tuple{Matrix{UInt16},ComplexRectangle} where {FT,QT,CT,M,N,D}
+    yn,xn = size(Z)
     (matU,matF) = (Matrix{UInt16}(undef,yn,xn),Matrix{Complex{Float64}}(undef,yn,xn))
     @time @threads for j = 1:yn; for k = 1:xn;
         (matU[j,k],matF[j,k]) = orbit(K,Z.Ω[j,k])::Tuple{UInt16,Complex{Float64}}
     end; end
-    return (matU,ComplexRectangle(Z.∂,matF))
+    return (matU,ComplexRectangle(Rectangle(Z),matF))
 end
 
 # determine if plot is Iteration, Roots, or Limit
