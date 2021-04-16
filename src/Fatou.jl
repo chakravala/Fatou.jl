@@ -24,7 +24,7 @@ struct ComplexRectangle <: ComplexBundle
 end
 
 bounds(R::ComplexRectangle) = bounds(Rectangle(R))
-bounds(Ω::Rectangle) = R.∂
+bounds(Ω::Rectangle) = Ω.∂
 Base.size(Ω::Rectangle) = (round(UInt16,(Ω.∂[4]-Ω.∂[3])/(Ω.∂[2]-Ω.∂[1])*Ω.n),Ω.n)
 Base.size(R::ComplexRectangle) = size(R.Ω)
 
