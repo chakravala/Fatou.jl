@@ -1,7 +1,7 @@
 #   This file is part of Fatou.jl. It is licensed under the MIT license
 #   Copyright (C) 2019 Michael Reed
 
-PyPlot.plot(K::FilledSet;c::String="",bare=::Bool=false) = PyPlot.imshow(K;cmap=c,bare=bare)
+PyPlot.plot(K::FilledSet;c::String="",bare::Bool=false) = PyPlot.imshow(K;cmap=c,bare=bare)
 
 function PyPlot.imshow(K::FilledSet;cmap::String="",bare::Bool=false)
     PyPlot.figure() # plot figure using imshow based in input preferences
