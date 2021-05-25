@@ -6,8 +6,8 @@ PyPlot.plot(K::FilledSet;c::String="",bare::Bool=false) = PyPlot.imshow(K;cmap=c
 function PyPlot.imshow(K::FilledSet;cmap::String="",bare::Bool=false)
     PyPlot.figure() # plot figure using imshow based in input preferences
     isempty(cmap) && (cmap = K.meta.cmap)
-    isempty(cmap) ? PyPlot.imshow(K.meta.iter ? K.iter : K.mix, extent=K.set.∂) :
-        PyPlot.imshow(K.meta.iter ? K.iter : K.mix, cmap=cmap, extent=K.set.∂)
+    isempty(cmap) ? PyPlot.imshow(K.meta.iter ? K.iter : K.mix, extent=bounds(K)) :
+        PyPlot.imshow(K.meta.iter ? K.iter : K.mix, cmap=cmap, extent=bounds(K))
     PyPlot.tight_layout()
     !bare && PyPlot.title(K)
 end

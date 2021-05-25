@@ -122,6 +122,9 @@ Rectangle(R::ComplexRectangle) = R.∂
 ComplexRectangle(K::FilledSet) = K.set
 ComplexRectangle(Ω::Matrix{Complex{Float64}}) = ComplexRectangle(Rectangle([0,size(Ω)[2],0,size(Ω)[1]],size(Ω)[2]),Ω)
 
+bounds(K::Define) = bounds(Rectangle(K))
+bounds(K::FilledSet) = bounds(ComplexRectangle(K))
+
 ranges(K::FilledSet) = ranges(K.meta)
 ranges(K::Define) = ranges(Rectangle(K))
 function ranges(Ω::Rectangle)
