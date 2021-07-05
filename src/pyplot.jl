@@ -18,7 +18,7 @@ function PyPlot.title(K::FilledSet) # annotate title using LaTeX
         PyPlot.title(latexstring("$text m = $(K.meta.m), ")*t)
         PyPlot.ylabel(L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
     else
-        PyPlot.title(latexstring(ttext)*t)
+        PyPlot.title(latexstring(text)*t)
     end
     PyPlot.tight_layout()
     PyPlot.colorbar()
