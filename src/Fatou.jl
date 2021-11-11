@@ -377,7 +377,7 @@ function __init__()
             !bare && print(io,String(K))
         end
     end
-    @require AbstractPlotting="537997a7-5e4e-5d89-9595-2241ea00577e" include("makie.jl")
+    @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("makie.jl")
     @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("pyplot.jl")
     @require UnicodePlots="b8865327-cd53-5732-bb35-84acbb429228" include("uniplots.jl")
 end
