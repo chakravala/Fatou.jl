@@ -1,7 +1,7 @@
 name = "Fatou"
 uuid = "5f923234-c850-556d-bb4f-28324fa1959a"
 authors = ["Michael Reed"]
-version = "1.1.5"
+version = "1.2.0"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"

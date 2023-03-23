@@ -52,7 +52,7 @@ Base.size(R::ComplexRectangle) = size(R.Ω)
 
 `Define` the metadata for a `Fatou.FilledSet`.
 """
-struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D} <: ComplexBundle
+struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D,B} <: ComplexBundle
     E::Any # input expression
     F::FT # primary map
     Q::QT # escape criterion
@@ -90,12 +90,13 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D} <: ComplexBundle
             depth::Int=1,
             cmap::String="",
             plane::Bool=false,
-            disk::Bool=false)
+            disk::Bool=false,
+            B=im)
         !newt ? (f = genfun(E,[:z,:c]); q = genfun(Q,[:z,:c])) :
         (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
         c = genfun(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
-        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk}(e,f,q,c,Rectangle(∂,n),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
+        return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk,B}(e,f,q,c,Rectangle(∂,n),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
     end
 end
 
@@ -104,14 +105,14 @@ end
 
 Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 """
-struct FilledSet{FT,QT,CT,M,N,P,D} <: ComplexBundle
-    meta::Define{FT,QT,CT,M,N,P,D}
+struct FilledSet{FT,QT,CT,M,N,P,D,B} <: ComplexBundle
+    meta::Define{FT,QT,CT,M,N,P,D,B}
     set::ComplexRectangle
     iter::Matrix{UInt16}
     mix::Matrix{Float64}
-    function FilledSet{FT,QT,CT,M,N,P,D}(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle) where {FT,QT,CT,M,N,P,D}
+    function FilledSet{FT,QT,CT,M,N,P,D,B}(K::Define{FT,QT,CT,M,N,P,D,B},Z::ComplexRectangle) where {FT,QT,CT,M,N,P,D,B}
         (i,s) = Compute(K,Z)
-        return new{FT,QT,CT,M,N,P,D}(K,s,i,broadcast(K.C,s.Ω,broadcast(float,i./K.N),K.p))
+        return new{FT,QT,CT,M,N,P,D,B}(K,s,i,broadcast(K.C,s.Ω,broadcast(float,i./K.N),K.p))
     end
 end
 
@@ -147,7 +148,7 @@ Compute the `Fatou.FilledSet` set using `Fatou.Define`.
 julia> fatou(K)
 ```
 """
-fatou(K::Define{FT,QT,CT,M,N,P,D},Z::ComplexRectangle) where {FT,QT,CT,M,N,P,D} = FilledSet{FT,QT,CT,M,N,P,D}(K,Z)
+fatou(K::Define{FT,QT,CT,M,N,P,D,B},Z::ComplexRectangle) where {FT,QT,CT,M,N,P,D,B} = FilledSet{FT,QT,CT,M,N,P,D,B}(K,Z)
 fatou(K::Define,Z::Rectangle=Rectangle(K)) = fatou(K,fatou(Z))
 fatou(K::Define,Z::FilledSet) = fatou(K,ComplexRectangle(Z))
 fatou(K::Define,Z::Define) = fatou(K,fatou(Z))
@@ -197,8 +198,9 @@ function juliafill(E;
         depth::Int=1,
         cmap::String="",
         plane::Bool=false,
-        disk::Bool=false)
-    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk)
+        disk::Bool=false,
+        B=im)
+    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk,B=B)
 end
 
 """
@@ -244,9 +246,10 @@ function mandelbrot(E;
         depth::Int=1,
         cmap::String="",
         plane::Bool=false,
-        disk::Bool=false)
+        disk::Bool=false,
+        B=im)
     m ≠ 0 && (newt = true)
-    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,mandel=true,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk)
+    return Define(E,Q=Q,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=newt,m=m,mandel=true,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk,B=B)
 end
 
 """
@@ -291,8 +294,9 @@ function newton(E;
         depth::Int=1,
         cmap::String="",
         plane::Bool=false,
-        disk::Bool=false)
-    return Define(E,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=true,m=m,mandel=mandel,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk)
+        disk::Bool=false,
+        B=im)
+    return Define(E,C=C,∂=∂,n=n,N=N,ϵ=ϵ,iter=iter,p=p,newt=true,m=m,mandel=mandel,seed=seed,x0=x0,orbit=orbit,depth=depth,cmap=cmap,plane=plane,disk=disk,B=B)
 end
 
 # load additional functionality
@@ -316,7 +320,7 @@ plane(z::Complex) = (2z.re/(z.re^2+(1-z.im)^2))+im*(1-z.re^2-z.im^2)/(z.re^2+(1-
 disk(z::Complex) = (2z.re/(z.re^2+(1+z.im)^2))+im*(z.re^2+z.im^2-1)/(z.re^2+(1+z.im)^2)
 
 # define function for computing orbit of a z0 input
-function orbit(K::Define{FT,QT,CT,M,N,P,D},z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D}
+function orbit(K::Define{FT,QT,CT,M,N,P,D,im},z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D}
     M ? (z = K.seed) : (z = P ? plane(z0) : z0)
     zn = 0x0000
     while (N ? (K.Q(z,z0)::Float64>K.ϵ)::Bool : (K.Q(z,z0)::Float64<K.ϵ))::Bool && K.N>zn
@@ -380,6 +384,20 @@ function __init__()
     @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("makie.jl")
     @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("pyplot.jl")
     @require UnicodePlots="b8865327-cd53-5732-bb35-84acbb429228" include("uniplots.jl")
+    @require Grassmann="4df31cd9-4c27-5bea-88d0-e6a7146666d8" begin
+        function orbit(K::Define{FT,QT,CT,M,N,P,D,B},Z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D,B}
+            V = Grassmann.Manifold(B)
+            z0 = Grassmann.Couple{V,B}(Z0)
+            M ? (z = K.seed) : (z = P ? Grassmann.Couple{V,B}(plane(Z0)) : z0)
+            zn = 0x0000
+            while (N ? (Grassmann.value(K.Q(z,z0))::Float64>K.ϵ)::Bool : (Grassmann.value(K.Q(z,z0))::Float64<K.ϵ))::Bool && K.N>zn
+                z = K.F(z,z0)::Grassmann.Couple{V,B,Float64}
+                zn+=0x0001
+            end; #end
+            # return the normalized argument of z or iteration count
+            return (zn::UInt16,(D ? disk(Grassmann.value(z)) : Grassmann.value(z))::Complex{Float64})
+        end
+    end
 end
 
 end # module
