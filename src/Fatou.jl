@@ -388,7 +388,7 @@ function __init__()
         function orbit(K::Define{FT,QT,CT,M,N,P,D,B},Z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D,B}
             V = Grassmann.Manifold(B)
             z0 = Grassmann.Couple{V,B}(Z0)
-            M ? (z = K.seed) : (z = P ? Grassmann.Couple{V,B}(plane(Z0)) : z0)
+            M ? (z = Grassmann.Couple{V,B}(K.seed)) : (z = P ? Grassmann.Couple{V,B}(plane(Z0)) : z0)
             zn = 0x0000
             while (N ? (Grassmann.value(K.Q(z,z0))::Float64>K.ϵ)::Bool : (Grassmann.value(K.Q(z,z0))::Float64<K.ϵ))::Bool && K.N>zn
                 z = K.F(z,z0)::Grassmann.Couple{V,B,Float64}
@@ -399,5 +399,7 @@ function __init__()
         end
     end
 end
+
+Reduce.stop()
 
 end # module

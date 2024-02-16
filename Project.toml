@@ -1,7 +1,7 @@
 name = "Fatou"
 uuid = "5f923234-c850-556d-bb4f-28324fa1959a"
 authors = ["Michael Reed"]
-version = "1.2.0"
+version = "1.2.1"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
@@ -12,7 +12,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
 julia = "1"
-Reduce = "1.2"
+Reduce = "1.2.13"
 Requires = "1"
 SyntaxTree = "1"
 ColorSchemes = "3"
