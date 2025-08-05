@@ -1,8 +1,23 @@
-#   This file is part of Fatou.jl. It is licensed under the MIT license
-#   Copyright (C) 2019 Michael Reed
+module UnicodePlotsExt
 
-function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384)
-    x,N,N2,orbit,bis = real_orb(E,f,bi,orb,depth,incr)
+#   This file is part of Fatou.jl.
+#   It is licensed under the MIT license
+#   Copyright (C) 2019 Michael Reed
+#       _           _                         _
+#      | |         | |                       | |
+#   ___| |__   __ _| | ___ __ __ ___   ____ _| | __ _
+#  / __| '_ \ / _` | |/ / '__/ _` \ \ / / _` | |/ _` |
+# | (__| | | | (_| |   <| | | (_| |\ V / (_| | | (_| |
+#  \___|_| |_|\__,_|_|\_\_|  \__,_| \_/ \__,_|_|\__,_|
+#
+#   https://github.com/chakravala
+#   https://crucialflow.com
+
+using Fatou
+isdefined(Fatou, :Requires) ? (import Fatou: UnicodePlots) : (using UnicodePlots)
+
+function Fatou.orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384)
+    x,N,N2,orbit,bis = Fatou.real_orb(E,f,bi,orb,depth,incr)
     # trim graph
     d=1.07
     xl = bi[1:2]
@@ -28,3 +43,5 @@ function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::I
     UnicodePlots.title!(plt,"z ↦ $E$funt")
     return plt
 end
+
+end # module

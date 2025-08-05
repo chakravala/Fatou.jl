@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Reed"
+  given-names: "Michael"
+  orcid: "https://orcid.org/0000-0002-8006-7816"
+title: "Fatou.jl"
+version: 1.2.1
+doi: 10.5281/zenodo.10670459
+date-released: 2024-02-16
+url: "https://github.com/chakravala/Fatou.jl"

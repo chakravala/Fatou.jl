@@ -1,7 +1,7 @@
 name = "Fatou"
 uuid = "5f923234-c850-556d-bb4f-28324fa1959a"
 authors = ["Michael Reed"]
-version = "1.2.1"
+version = "1.2.2"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
@@ -9,6 +9,20 @@ LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 SyntaxTree = "a4af3ec5-f8ac-5fed-a759-c2e80b4d74cb"
 Reduce = "93e0c654-6965-5f22-aba9-9c1ae6b3c259"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+
+[weakdeps]
+ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
+#Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
+Grassmann = "4df31cd9-4c27-5bea-88d0-e6a7146666d8"
+
+[extensions]
+ImageInTerminalExt = "ImageInTerminal"
+#MakieExt = "Makie"
+PyPlotExt = "PyPlot"
+UnicodePlotsExt = "UnicodePlots"
+GrassmannExt = "Grassmann"
 
 [compat]
 julia = "1"

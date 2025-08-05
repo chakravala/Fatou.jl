@@ -1,8 +1,25 @@
 module Fatou
-using SyntaxTree,Reduce,LaTeXStrings,Requires,Base.Threads
+using SyntaxTree, Reduce, LaTeXStrings, Base.Threads
 
-#   This file is part of Fatou.jl. It is licensed under the MIT license
+#   This file is part of Fatou.jl.
+#   It is licensed under the MIT license
 #   Copyright (C) 2017 Michael Reed
+#       _           _                         _
+#      | |         | |                       | |
+#   ___| |__   __ _| | ___ __ __ ___   ____ _| | __ _
+#  / __| '_ \ / _` | |/ / '__/ _` \ \ / / _` | |/ _` |
+# | (__| | | | (_| |   <| | | (_| |\ V / (_| | | (_| |
+#  \___|_| |_|\__,_|_|\_\_|  \__,_| \_/ \__,_|_|\__,_|
+#
+#   https://github.com/chakravala
+#   https://crucialflow.com
+#  _________     ____     ________     ____     __    __
+# (_   _____)   (    )   (___  ___)   / __ \    ) )  ( (
+#   ) (___      / /\ \       ) )     / /  \ \  ( (    ) )
+#  (   ___)    ( (__) )     ( (     ( ()  () )  ) )  ( (
+#   ) (         )    (       ) )    ( ()  () ) ( (    ) )
+#  (   )       /  /\  \     ( (      \ \__/ /   ) \__/ (
+#   \_/       /__(  )__\    /__\      \____/    \______/
 
 export fatou, juliafill, mandelbrot, newton, basin, plot
 
@@ -353,50 +370,36 @@ function Base.String(K::FilledSet) # annotate title using LaTeX
     K.meta.newt ? "$text m = $(K.meta.m), $t" : "$text $t"
 end
 
+import ColorSchemes
+nonan(x) = isnan(x) ? 0.0 : x
+function (C::ColorSchemes.ColorScheme)(K::Fatou.FilledSet)
+    S = size(K.iter)
+    H = zeros(ColorSchemes.RGB{Float64},S...)
+    if K.meta.iter
+        M = length(C)/(maximum(K.iter)+1)
+        for x ∈ 1:S[1], y ∈ 1:S[2]
+            H[x,y] = C[round(Int,M*(K.iter[x,y]+1),RoundUp)]
+        end
+    else
+        for x ∈ 1:S[1], y ∈ 1:S[2]
+            H[x,y] = get(C,nonan(K.mix[x,y]))
+        end
+    end
+    return H
+end
+
+if !isdefined(Base, :get_extension)
+using Requires
+end
+
 function __init__()
     println("Fatou detected $(Threads.nthreads()) julia threads.")
-    @require ColorSchemes="35d6a980-a343-548e-a6ea-1d62b119f2f4" begin
-        nonan(x) = isnan(x) ? 0.0 : x
-        function (C::ColorSchemes.ColorScheme)(K::FilledSet)
-            S = size(K.iter)
-            H = zeros(ColorSchemes.RGB{Float64},S...)
-            if K.meta.iter
-                M = length(C)/(maximum(K.iter)+1)
-                for x ∈ 1:S[1], y ∈ 1:S[2]
-                    H[x,y] = C[round(Int,M*(K.iter[x,y]+1),RoundUp)]
-                end
-            else
-                for x ∈ 1:S[1], y ∈ 1:S[2]
-                    H[x,y] = get(C,nonan(K.mix[x,y]))
-                end
-            end
-            return H
-        end
-    end
-    @require ImageInTerminal="d8c32880-2388-543b-8c61-d9f865259254" begin
-        import ColorSchemes
-        function Base.show(io::IO,K::FilledSet;c::String="",bare::Bool=false)
-            isempty(c) && (c = K.meta.cmap)
-            display(getproperty(ColorSchemes, isempty(c) ? :balance : Symbol(c))(K))
-            !bare && print(io,String(K))
-        end
-    end
-    @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("makie.jl")
-    @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("pyplot.jl")
-    @require UnicodePlots="b8865327-cd53-5732-bb35-84acbb429228" include("uniplots.jl")
-    @require Grassmann="4df31cd9-4c27-5bea-88d0-e6a7146666d8" begin
-        function orbit(K::Define{FT,QT,CT,M,N,P,D,B},Z0::Complex{Float64}) where {FT,QT,CT,M,N,P,D,B}
-            V = Grassmann.Manifold(B)
-            z0 = Grassmann.Couple{V,B}(Z0)
-            M ? (z = Grassmann.Couple{V,B}(K.seed)) : (z = P ? Grassmann.Couple{V,B}(plane(Z0)) : z0)
-            zn = 0x0000
-            while (N ? (Grassmann.value(K.Q(z,z0))::Float64>K.ϵ)::Bool : (Grassmann.value(K.Q(z,z0))::Float64<K.ϵ))::Bool && K.N>zn
-                z = K.F(z,z0)::Grassmann.Couple{V,B,Float64}
-                zn+=0x0001
-            end; #end
-            # return the normalized argument of z or iteration count
-            return (zn::UInt16,(D ? disk(Grassmann.value(z)) : Grassmann.value(z))::Complex{Float64})
-        end
+    @static if !isdefined(Base, :get_extension)
+    @require ImageInTerminal="d8c32880-2388-543b-8c61-d9f865259254" include("../ext/ImageInTerminalExt.jl")
+    #@require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" include("../ext/MakieExt.jl")
+    @require PyPlot="d330b81b-6aea-500a-939a-2ce795aea3ee" include("../ext/PyPlotExt.jl")
+    @require UnicodePlots="b8865327-cd53-5732-bb35-84acbb429228" include("../ext/UnicodePlotsExt.jl")
+    @require Grassmann="4df31cd9-4c27-5bea-88d0-e6a7146666d8" include("../ext/GrassmannExt.jl")
     end
 end
 
