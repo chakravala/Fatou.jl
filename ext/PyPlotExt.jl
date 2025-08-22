@@ -28,7 +28,7 @@ function PyPlot.imshow(K::Fatou.FilledSet;cmap::String="",bare::Bool=false)
 end
 
 function PyPlot.title(K::Fatou.FilledSet) # annotate title using LaTeX
-    text,t = "f:z\\mapsto $(rdpm(Fatou.Algebra.latex(K.meta.E))),\\,",Fatou.LaTeXString(Fatou.typeplot(K))
+    text,t = "f:z\\mapsto $(Fatou.rdpm(Fatou.Algebra.latex(K.meta.E))),\\,",Fatou.LaTeXString(Fatou.typeplot(K))
     if K.meta.newt # annotate y-axis with Newton's method
         PyPlot.title(Fatou.latexstring("$text m = $(K.meta.m), ")*t)
         PyPlot.ylabel(Fatou.L"Fatou\,set:\,"*L"z\,↦\,z-m\,×\,f(z)\,/\,f\,'(z)")
@@ -39,7 +39,7 @@ function PyPlot.title(K::Fatou.FilledSet) # annotate title using LaTeX
     PyPlot.colorbar()
 end
 
-function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384)
+function Fatou.orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::Int=384)
     x,N,N2,orbit,bis = Fatou.real_orb(E,f,bi,orb,depth,incr)
     # prepare for next figure
     PyPlot.figure()
@@ -64,7 +64,7 @@ function orbit(E,f::Function,bi::Matrix{Float64},orb::Int=0,depth::Int=1,incr::I
     PyPlot.xlim(bi[1],bi[2])
     PyPlot.ylim(minimum([d*minimum(N[:,2]),0]),maximum([d*maximum(N[:,2]),0]))
     # set title
-    fune = rdpm(Fatou.Algebra.latex(E))
+    fune = Fatou.rdpm(Fatou.Algebra.latex(E))
     PyPlot.title(Fatou.latexstring("\$ x \\mapsto $fune\$$funt"))
     # set legend
     PyPlot.legend(vcat([Fatou.L"$y=x$",L"$\phi(x)$",L"(x_n,\phi(x_n))"],[Fatou.latexstring("\\phi^{$x}(x)") for x ∈ 2:depth],funs))
