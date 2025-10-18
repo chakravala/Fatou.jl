@@ -1,5 +1,6 @@
 module Fatou
 using SyntaxTree, Reduce, LaTeXStrings, Base.Threads
+import SyntaxTree: genlatest
 
 #   This file is part of Fatou.jl.
 #   It is licensed under the MIT license
@@ -109,9 +110,9 @@ struct Define{FT<:Function,QT<:Function,CT<:Function,M,N,P,D,B} <: ComplexBundle
             plane::Bool=false,
             disk::Bool=false,
             B=im)
-        !newt ? (f = genfun(E,[:z,:c]); q = genfun(Q,[:z,:c])) :
-        (f = genfun(newton_raphson(E,m),[:z,:c]); q = genfun(Expr(:call,:abs,E),[:z,:c]))
-        c = genfun(C,[:z,:n,:p])
+        !newt ? (f = genlatest(E,[:z,:c]); q = genlatest(Q,[:z,:c])) :
+        (f = genlatest(newton_raphson(E,m),[:z,:c]); q = genlatest(Expr(:call,:abs,E),[:z,:c]))
+        c = genlatest(C,[:z,:n,:p])
         e = typeof(E) == String ? parse(E) : E
         return new{typeof(f),typeof(q),typeof(c),mandel,newt,plane,disk,B}(e,f,q,c,Rectangle(∂,n),UInt16(N),float(ϵ),iter,float(p),newt,m,mandel,seed,x0,orbit,depth,cmap,plane,disk)
     end
